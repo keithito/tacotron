@@ -13,6 +13,9 @@ Google [released](https://google.github.io/tacotron) some nice audio samples tha
 generated but didn't provide their source code or training data. This is an attempt to
 implement the model described in their paper.
 
+
+### Sample Output
+
 Output after training for 185K steps (~2 days):
 
   * [Audio Samples](https://keithito.github.io/audio-samples/)
