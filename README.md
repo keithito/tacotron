@@ -107,7 +107,7 @@ pip install -r requirements.txt
    to [localhost:9000](http://localhost:9000) and type what you want to speak.
 
 
-## Miscellanous Notes
+## Miscellaneous Notes
 
   * [TCMalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) seems to improve
     training speed and avoids occasional slowdowns seen with the default allocator. You
