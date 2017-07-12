@@ -5,7 +5,7 @@ An implementation of Google's Tacotron speech synthesis model in Tensorflow.
 
 ### Audio Samples
 
-  * Listen to **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 390k steps (~5 days).
+  * **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 390k steps (~5 days).
   * The model is still training. I'll update the samples if the quality gets better.
 
 
