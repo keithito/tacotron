@@ -11,8 +11,8 @@ def load_wav(path):
 
 
 def save_wav(wav, path):
-  wav = (wav * 32767).astype(np.int16)
-  librosa.output.write_wav(path, wav, hparams.sample_rate)
+  wav *= 32767 / max(0.01, np.max(np.abs(wav)))
+  librosa.output.write_wav(path, wav.astype(np.int16), hparams.sample_rate)
 
 
 def spectrogram(y):
