@@ -3,9 +3,10 @@
 An implementation of Google's Tacotron speech synthesis model in Tensorflow.
 
 
-### Example Output
+### Audio Samples
 
-  * **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 185k steps (~2 days). The model is still training. I'll update the samples when it's further along.
+  * Listen to **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 390k steps (~5 days).
+  * The model is still training. I'll update the samples if the quality gets better.
 
 
 ## Background
@@ -31,12 +32,12 @@ pip install -r requirements.txt
 
 1. **Download and unpack a model**:
    ```
-   curl http://data.keithito.com/data/speech/tacotron-20170708.tar.bz2 | tar x -C /tmp
+   curl http://data.keithito.com/data/speech/tacotron-20170712.tar.bz2 | tar x -C /tmp
    ```
 
 2. **Run the demo server**:
    ```
-   python3 demo_server.py --checkpoint /tmp/tacotron-20170708/model.ckpt
+   python3 demo_server.py --checkpoint /tmp/tacotron-20170712/model.ckpt
    ```
 
 3. **Point your browser at [localhost:9000](http://localhost:9000)**
@@ -123,10 +124,5 @@ pip install -r requirements.txt
 
 
 ## Other Implementations
-
-  * Alex Barron has some nice results from his implementation trained on the
-    [Nancy Corpus](http://www.cstr.ed.ac.uk/projects/blizzard/2011/lessac_blizzard2011):
-    https://github.com/barronalex/Tacotron
-
-  * Kyubyong Park has a very promising implementation trained on the World English Bible here:
-    https://github.com/Kyubyong/tacotron
+  * By Alex Barron: https://github.com/barronalex/Tacotron
+  * By Kyubyong Park: https://github.com/Kyubyong/tacotron

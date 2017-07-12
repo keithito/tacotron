@@ -11,8 +11,8 @@ def load_wav(path):
 
 
 def save_wav(wav, path):
-  wav = (wav * 32767).astype(np.int16)
-  librosa.output.write_wav(path, wav, hparams.sample_rate)
+  wav *= 32767 / max(0.01, np.max(np.abs(wav)))
+  librosa.output.write_wav(path, wav.astype(np.int16), hparams.sample_rate)
 
 
 def spectrogram(y):
@@ -23,7 +23,7 @@ def spectrogram(y):
 
 def inv_spectrogram(spectrogram):
   S = _db_to_amp(_denormalize(spectrogram) + hparams.ref_level_db)  # Convert back to linear
-  return _inv_preemphasis(_griffin_lim(S ** 1.2))                   # Reconstruct phase
+  return _inv_preemphasis(_griffin_lim(S ** 1.5))                   # Reconstruct phase
 
 
 def melspectrogram(y):
@@ -34,7 +34,7 @@ def melspectrogram(y):
 
 def inv_melspectrogram(melspectrogram):
   S = _mel_to_linear(_db_to_amp(_denormalize(melspectrogram)))   # Convert back to linear
-  return _inv_preemphasis(_griffin_lim(S ** 1.2))                # Reconstruct phase
+  return _inv_preemphasis(_griffin_lim(S ** 1.5))                # Reconstruct phase
 
 
 # Based on https://github.com/librosa/librosa/issues/434
