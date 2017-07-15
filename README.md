@@ -5,8 +5,10 @@ An implementation of Google's Tacotron speech synthesis model in Tensorflow.
 
 ### Audio Samples
 
-  * **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 390k steps (~5 days).
-  * The model is still training. I'll update the samples if the quality gets better.
+  * **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 500k steps (~7 days).
+  * Speech started to become intelligble around 20k steps.
+  * There hasn't been too much improvement since around 200k steps.
+  * Training is still going. I'll update the samples if the quality gets better.
 
 
 ## Background
@@ -17,6 +19,7 @@ where they present a neural text-to-speech model that learns to synthesize speec
 attempt to provide an open-source implementation of the model described in their paper.
 
 The quality isn't as good as Google's demo yet, but hopefully it will get there someday :-).
+Pull requests are welcome!
 
 
 
@@ -32,12 +35,12 @@ pip install -r requirements.txt
 
 1. **Download and unpack a model**:
    ```
-   curl http://data.keithito.com/data/speech/tacotron-20170712.tar.bz2 | tar x -C /tmp
+   curl http://data.keithito.com/data/speech/tacotron-20170714.tar.bz2 | tar x -C /tmp
    ```
 
 2. **Run the demo server**:
    ```
-   python3 demo_server.py --checkpoint /tmp/tacotron-20170712/model.ckpt
+   python3 demo_server.py --checkpoint /tmp/tacotron-20170714/model.ckpt
    ```
 
 3. **Point your browser at [localhost:9000](http://localhost:9000)**
@@ -105,7 +108,8 @@ pip install -r requirements.txt
    python demo_server.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
    ```
    Replace "185000" with the checkpoint number that you want to use, then open a browser
-   to [localhost:9000](http://localhost:9000) and type what you want to speak.
+   to [localhost:9000](http://localhost:9000) and type what you want to speak. Alternately, you can
+   run [eval.py] if you don't want to use the server.
 
 
 ## Miscellaneous Notes
@@ -121,6 +125,12 @@ pip install -r requirements.txt
 
   * If you pass a Slack incoming webhook URL as the `--slack_url` flag to train.py, it will send
     you progress updates every 1000 steps.
+
+  * Occasionally, you may see a spike in loss and the model will forget how to attend (the
+    alignments will no longer make sense). Although it will recover eventually, it may
+    save time to restart at a checkpoint prior to the spike by passing the
+    `--restore_step=150000` flag to train.py (replacing 150000 with a step number prior to the
+    spike). I'm looking into why this happens...
 
 
 ## Other Implementations
