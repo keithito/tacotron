@@ -1,14 +1,14 @@
 # tacotron
 
-An implementation of Google's Tacotron speech synthesis model in Tensorflow.
+An implementation of Tacotron speech synthesis in Tensorflow.
 
 
 ### Audio Samples
 
   * **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 500k steps (~7 days).
-  * Speech started to become intelligble around 20k steps.
-  * There hasn't been too much improvement since around 200k steps.
-  * Training is still going. I'll update the samples if the quality gets better.
+    * Speech started to become intelligble around 20k steps.
+    * There hasn't been too much improvement since around 200k steps.
+    * Training is still going. I'll update the samples if the quality gets better.
 
 
 ## Background
