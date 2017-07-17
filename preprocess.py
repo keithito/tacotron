@@ -23,7 +23,7 @@ def preprocess_ljspeech(args):
 
 
 def write_metadata(metadata, out_dir):
-  with open(os.path.join(out_dir, 'train.txt'), 'w') as f:
+  with open(os.path.join(out_dir, 'train.txt'), 'w', encoding="utf-8") as f:
     for m in metadata:
       f.write('|'.join([str(x) for x in m]) + '\n')
   frames = sum([m[2] for m in metadata])
