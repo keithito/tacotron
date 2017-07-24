@@ -130,7 +130,8 @@ pip install -r requirements.txt
     alignments will no longer make sense). Although it will recover eventually, it may
     save time to restart at a checkpoint prior to the spike by passing the
     `--restore_step=150000` flag to train.py (replacing 150000 with a step number prior to the
-    spike). I'm looking into why this happens...
+    spike). **Update**: a recent [fix](https://github.com/keithito/tacotron/pull/7) to gradient
+    clipping by @candlewill may have fixed this.
 
 
 ## Other Implementations
