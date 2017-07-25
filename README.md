@@ -1,14 +1,14 @@
-# tacotron
+# Tacotron
 
 An implementation of Tacotron speech synthesis in Tensorflow.
 
 
 ### Audio Samples
 
-  * **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 500k steps (~7 days).
+  * **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 877k steps (~11 days).
     * Speech started to become intelligble around 20k steps.
-    * There hasn't been too much improvement since around 200k steps.
-    * Training is still going. I'll update the samples if the quality gets better.
+    * There hasn't been much improvement since around 200k steps -- loss has gone down, but it's hard to notice
+      listening to the audio.
 
 
 ## Background
@@ -26,6 +26,7 @@ Pull requests are welcome!
 ## Quick Start
 
 ### Installing dependencies
+Make sure you have Python 3. Then:
 ```
 pip install -r requirements.txt
 ```
@@ -35,25 +36,27 @@ pip install -r requirements.txt
 
 1. **Download and unpack a model**:
    ```
-   curl http://data.keithito.com/data/speech/tacotron-20170714.tar.bz2 | tar x -C /tmp
+   curl http://data.keithito.com/data/speech/tacotron-20170720.tar.bz2 | tar x -C /tmp
    ```
 
 2. **Run the demo server**:
    ```
-   python3 demo_server.py --checkpoint /tmp/tacotron-20170714/model.ckpt
+   python3 demo_server.py --checkpoint /tmp/tacotron-20170720/model.ckpt
    ```
 
-3. **Point your browser at [localhost:9000](http://localhost:9000)**
+3. **Point your browser at localhost:9000**
    * Type what you want to synthesize
 
 
 
 ### Training
 
+*Note: you need at least 40GB of free disk space to train a model.*
+
 1. **Download a speech dataset.**
 
    The following are supported out of the box:
-    * [LJ Speech](https://keithito.com/LJ-Speech-Dataset) (Public Domain)
+    * [LJ Speech](https://keithito.com/LJ-Speech-Dataset/) (Public Domain)
     * [Blizzard 2012](http://www.cstr.ed.ac.uk/projects/blizzard/2012/phase_one) (Creative Commons Attribution Share-Alike)
 
    You can use other datasets if you convert them to the right format. See
@@ -105,11 +108,14 @@ pip install -r requirements.txt
 
 6. **Synthesize from a checkpoint**
    ```
-   python demo_server.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
+   python3 demo_server.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
    ```
    Replace "185000" with the checkpoint number that you want to use, then open a browser
-   to [localhost:9000](http://localhost:9000) and type what you want to speak. Alternately, you can
-   run [eval.py] if you don't want to use the server.
+   to `localhost:9000` and type what you want to speak. Alternately, you can
+   run [eval.py](eval.py) at the command line:
+   ```
+   python3 eval.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
+   ```
 
 
 ## Miscellaneous Notes
