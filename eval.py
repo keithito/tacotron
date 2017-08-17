@@ -8,7 +8,7 @@ from synthesizer import Synthesizer
 sentences = [
   # From July 8, 2017 New York Times:
   'Scientists at the CERN laboratory say they have discovered a new particle.',
-  'There’s a way to measure the acute emotional intelligence that has never gone out of style.',
+  'There\'s a way to measure the acute emotional intelligence that has never gone out of style.',
   'President Trump met with other leaders at the Group of 20 conference.',
   'The Senate\'s bill to repeal and replace the Affordable Care Act is now imperiled.',
   # From Google's Tacotron example page:

@@ -2,7 +2,8 @@ import atexit
 from datetime import datetime
 import json
 from threading import Thread
-from urllib.request import Request, urlopen
+from urllib import urlopen
+from requests import Request
 
 
 _format = '%Y-%m-%d %H:%M:%S.%f'
