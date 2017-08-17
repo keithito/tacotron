@@ -1,7 +1,7 @@
 # Tacotron
 
 An implementation of Tacotron speech synthesis in Tensorflow.
-
+Modification to python2 implementation of author keithito, [github](https://github.com/keithito/tacotron).
 
 ### Audio Samples
 
@@ -41,7 +41,7 @@ pip install -r requirements.txt
 
 2. **Run the demo server**:
    ```
-   python3 demo_server.py --checkpoint /tmp/tacotron-20170720/model.ckpt
+   python demo_server.py --checkpoint /tmp/tacotron-20170720/model.ckpt
    ```
 
 3. **Point your browser at localhost:9000**
@@ -88,13 +88,13 @@ pip install -r requirements.txt
 
 3. **Preprocess the data**
    ```
-   python3 preprocess.py --dataset ljspeech
+   python preprocess.py --dataset ljspeech
    ```
      * Use `--dataset blizzard` for Blizzard data
 
 4. **Train a model**
    ```
-   python3 train.py
+   python train.py
    ```
 
 5. **Monitor with Tensorboard** (optional)
@@ -107,13 +107,13 @@ pip install -r requirements.txt
 
 6. **Synthesize from a checkpoint**
    ```
-   python3 demo_server.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
+   python demo_server.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
    ```
    Replace "185000" with the checkpoint number that you want to use, then open a browser
    to `localhost:9000` and type what you want to speak. Alternately, you can
    run [eval.py](eval.py) at the command line:
    ```
-   python3 eval.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
+   python eval.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
    ```
 
 
