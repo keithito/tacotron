@@ -13,6 +13,7 @@ from hparams import hparams, hparams_debug_string
 from models import create_model
 from util import audio, infolog, plot, textinput, ValueWindow
 log = infolog.log
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 
 def get_git_commit():
