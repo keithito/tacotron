@@ -50,14 +50,14 @@ def _griffin_lim(S):
 
 def _stft(y):
   n_fft = (hparams.num_freq - 1) * 2
-  hop_length = int(hparams.frame_shift_ms / 1000 * hparams.sample_rate)
-  win_length = int(hparams.frame_length_ms / 1000 * hparams.sample_rate)
+  hop_length = int(hparams.frame_shift_ms / 1000.0 * hparams.sample_rate)
+  win_length = int(hparams.frame_length_ms / 1000.0 * hparams.sample_rate)
   return librosa.stft(y=y, n_fft=n_fft, hop_length=hop_length, win_length=win_length)
 
 
 def _istft(y):
-  hop_length = int(hparams.frame_shift_ms / 1000 * hparams.sample_rate)
-  win_length = int(hparams.frame_length_ms / 1000 * hparams.sample_rate)
+  hop_length = int(hparams.frame_shift_ms / 1000.0 * hparams.sample_rate)
+  win_length = int(hparams.frame_length_ms / 1000.0 * hparams.sample_rate)
   return librosa.istft(y, hop_length=hop_length, win_length=win_length)
 
 

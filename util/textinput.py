@@ -1,6 +1,7 @@
 import re
 import unicodedata
 from util import cmudict, numbers
+import string
 
 
 # Input alphabet (63 symbols), plus ARPAbet (84 symbols):
@@ -12,7 +13,9 @@ _punctuation = '!\'(),-.:;?'
 _space       = ' '
 
 _valid_input_chars = _uppercase + _lowercase + _punctuation + _space
-_trans_table = str.maketrans({chr(i): ' ' for i in range(256) if chr(i) not in _valid_input_chars})
+tmp_dict = {chr(i): ' ' for i in range(256) if chr(i) not in _valid_input_chars}
+_trans_table = string.maketrans(''.join(tmp_dict.keys()), ''.join(tmp_dict.values()))
+# _trans_table = str.maketrans({chr(i): ' ' for i in range(256) if chr(i) not in _valid_input_chars})
 
 _normal_symbols = _pad + _eos + _valid_input_chars
 _num_normal_symbols = len(_normal_symbols)
@@ -34,7 +37,7 @@ def to_sequence(text, force_lowercase=True, expand_abbreviations=True):
   '''Converts a string of text to a sequence of IDs for the symbols in the text'''
   text = text.strip()
   text = text.replace('"', '')
-  text = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode()
+  text = unicodedata.normalize('NFKD', text.decode('utf-8')).encode('ascii', 'ignore').decode()
 
   sequence = []
   while len(text):
@@ -65,7 +68,7 @@ def to_string(sequence, remove_eos=False):
 
 def _text_to_sequence(text, force_lowercase, expand_abbreviations):
   text = numbers.normalize(text)
-  text = text.translate(_trans_table)
+  text = str(text).translate(_trans_table)
   if force_lowercase:
     text = text.lower()
   if expand_abbreviations:

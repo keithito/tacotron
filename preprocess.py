@@ -15,15 +15,17 @@ def preprocess_blizzard(args):
 
 
 def preprocess_ljspeech(args):
-  in_dir = os.path.join(args.base_dir, 'LJSpeech-1.0')
-  out_dir = os.path.join(args.base_dir, args.output)
-  os.makedirs(out_dir, exist_ok=True)
+  in_dir = os.path.join(os.getcwd(), 'LJSpeech-1.0')
+  out_dir = os.path.join(os.getcwd(), args.output)
+  if not os.path.exists(out_dir):
+      os.makedirs(out_dir)
+  # os.makedirs(out_dir, exist_ok=True)
   metadata = ljspeech.build_from_path(in_dir, out_dir, args.num_workers, tqdm=tqdm)
   write_metadata(metadata, out_dir)
 
 
 def write_metadata(metadata, out_dir):
-  with open(os.path.join(out_dir, 'train.txt'), 'w', encoding="utf-8") as f:
+  with open(os.path.join(out_dir, 'train.txt'), 'wb') as f:
     for m in metadata:
       f.write('|'.join([str(x) for x in m]) + '\n')
   frames = sum([m[2] for m in metadata])

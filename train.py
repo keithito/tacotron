@@ -13,6 +13,7 @@ from hparams import hparams, hparams_debug_string
 from models import create_model
 from util import audio, infolog, plot, textinput, ValueWindow
 log = infolog.log
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 
 def get_git_commit():
@@ -142,7 +143,9 @@ def main():
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = str(args.tf_log_level)
   run_name = args.name or args.model
   log_dir = os.path.join(args.base_dir, 'logs-%s' % run_name)
-  os.makedirs(log_dir, exist_ok=True)
+  if not os.path.exists(log_dir):
+      os.makedirs(log_dir)
+  # os.makedirs(log_dir, exist_ok=True)
   infolog.init(os.path.join(log_dir, 'train.log'), run_name, args.slack_url)
   hparams.parse(args.hparams)
   train(log_dir, args)
