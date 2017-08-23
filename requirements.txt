@@ -7,3 +7,6 @@ scipy==0.19.0
 tensorflow==1.2.0
 tensorflow-gpu==1.2.0
 tqdm==4.11.2
+librosa==0.5.1
+inflect==0.2.5
+falcon==1.2.0
