@@ -26,7 +26,6 @@ Pull requests are welcome!
 ## Quick Start
 
 ### Installing dependencies
-Make sure you have Python 3. Then:
 ```
 pip install -r requirements.txt
 ```
