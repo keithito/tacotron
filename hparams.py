@@ -3,10 +3,9 @@ import tensorflow as tf
 
 # Default hyperparameters:
 hparams = tf.contrib.training.HParams(
-  # Text:
-  force_lowercase=True,
-  expand_abbreviations=True,
-  use_cmudict=False,
+  # Comma-separated list of cleaners to run on text prior to training and eval. For non-English
+  # text, you may want to use "basic_pipeline" or "transliteration_pipeline" See inputs/cleaners.py.
+  cleaners='english_pipeline',
 
   # Audio:
   num_mels=80,
@@ -28,6 +27,7 @@ hparams = tf.contrib.training.HParams(
   adam_beta2=0.999,
   initial_learning_rate=0.002,
   decay_learning_rate=True,
+  use_cmudict=False,  # Use CMUDict during training to learn pronunciation of ARPAbet phonemes
 
   # Eval:
   max_iters=200,

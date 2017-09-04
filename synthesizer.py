@@ -3,7 +3,8 @@ import numpy as np
 import tensorflow as tf
 from hparams import hparams
 from models import create_model
-from util import audio, textinput
+from text import text_to_sequence
+from util import audio
 
 
 class Synthesizer:
@@ -23,9 +24,8 @@ class Synthesizer:
 
 
   def synthesize(self, text):
-    seq = textinput.to_sequence(text,
-      force_lowercase=hparams.force_lowercase,
-      expand_abbreviations=hparams.expand_abbreviations)
+    cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
+    seq = text_to_sequence(text, cleaner_names)
     feed_dict = {
       self.model.inputs: [np.asarray(seq, dtype=np.int32)],
       self.model.input_lengths: np.asarray([len(seq)], dtype=np.int32)

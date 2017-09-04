@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.contrib.rnn import GRUCell, MultiRNNCell, OutputProjectionWrapper, ResidualWrapper
 from tensorflow.contrib.seq2seq import BasicDecoder, BahdanauAttention, AttentionWrapper
-from util import textinput
+from text.symbols import symbols
 from util.infolog import log
 from .helpers import TacoTestHelper, TacoTrainingHelper
 from .modules import encoder_cbhg, post_cbhg, prenet
@@ -38,7 +38,7 @@ class Tacotron():
 
       # Embeddings
       embedding_table = tf.get_variable(
-        'embedding', [textinput.num_symbols(), 256], dtype=tf.float32,
+        'embedding', [len(symbols), 256], dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=0.5))
       embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, 256]
 

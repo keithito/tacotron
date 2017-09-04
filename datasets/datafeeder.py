@@ -5,7 +5,7 @@ import tensorflow as tf
 import threading
 import time
 import traceback
-from util import cmudict, textinput
+from text import cmudict, text_to_sequence
 from util.infolog import log
 
 
@@ -21,6 +21,7 @@ class DataFeeder(threading.Thread):
     super(DataFeeder, self).__init__()
     self._coord = coordinator
     self._hparams = hparams
+    self._cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
     self._offset = 0
 
     # Load metadata:
@@ -107,15 +108,15 @@ class DataFeeder(threading.Thread):
     if self._cmudict and random.random() < _p_cmudict:
       text = ' '.join([self._maybe_get_arpabet(word) for word in text.split(' ')])
 
-    input_data = np.asarray(textinput.to_sequence(text), dtype=np.int32)
+    input_data = np.asarray(text_to_sequence(text, self._cleaner_names), dtype=np.int32)
     linear_target = np.load(os.path.join(self._datadir, meta[0]))
     mel_target = np.load(os.path.join(self._datadir, meta[1]))
     return (input_data, mel_target, linear_target, len(linear_target))
 
 
   def _maybe_get_arpabet(self, word):
-    pron = self._cmudict.lookup(word)
-    return '{%s}' % pron[0] if pron is not None and random.random() < 0.5 else word
+    arpabet = self._cmudict.lookup(word)
+    return '{%s}' % arpabet[0] if arpabet is not None and random.random() < 0.5 else word
 
 
 def _prepare_batch(batch, outputs_per_step):
