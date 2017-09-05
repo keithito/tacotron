@@ -1,6 +1,6 @@
 # Tacotron
 
-An implementation of Tacotron speech synthesis in Tensorflow.
+An implementation of Tacotron speech synthesis in TensorFlow.
 
 
 ### Audio Samples
@@ -26,7 +26,7 @@ Pull requests are welcome!
 ## Quick Start
 
 ### Installing dependencies
-Make sure you have Python 3. Then:
+Make sure you have installed Python 3 and [TensorFlow](https://www.tensorflow.org/install/). Then:
 ```
 pip install -r requirements.txt
 ```
@@ -97,6 +97,11 @@ pip install -r requirements.txt
    python3 train.py
    ```
 
+   Tunable hyperparameters are found in [hparams.py](hparams.py). You can adjust these at the command
+   line using the `--hparams` flag, for example `--hparams="batch_size=16,outputs_per_step=2"`.
+   Hyperparameters should generally be set to the same values at both training and eval time.
+
+
 5. **Monitor with Tensorboard** (optional)
    ```
    tensorboard --logdir ~/tacotron/logs-tacotron
@@ -115,6 +120,7 @@ pip install -r requirements.txt
    ```
    python3 eval.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
    ```
+   Pass the same value for the `--hparams` flag as you did at training time.
 
 
 ## Miscellaneous Notes

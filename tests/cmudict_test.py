@@ -1,5 +1,5 @@
 import io
-from util import cmudict
+from text import cmudict
 
 
 test_data = '''
@@ -37,5 +37,5 @@ def test_cmudict():
 def test_cmudict_no_keep_ambiguous():
   c = cmudict.CMUDict(io.StringIO(test_data), keep_ambiguous=False)
   assert len(c) == 5
-  assert c.lookup('ADVERSITY') == ['AE0 D V ER1 S IH0 T IY2']
+  assert c.lookup('adversity') == ['AE0 D V ER1 S IH0 T IY2']
   assert c.lookup('adverse') == None
