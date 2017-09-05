@@ -120,7 +120,7 @@ pip install -r requirements.txt
    ```
    python3 eval.py --checkpoint ~/tacotron/logs-tacotron/model.ckpt-185000
    ```
-   Pass the same value for the `--hparams` flag as you did at training time.
+   If you set the `--hparams` flag when training, set the same value here.
 
 
 ## Miscellaneous Notes
