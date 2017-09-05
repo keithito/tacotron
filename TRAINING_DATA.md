@@ -16,7 +16,7 @@ Each training example consists of:
   3. A linear-scale spectrogram of the audio
 
 The preprocessor is responsible for generating these. See [ljspeech.py](datasets/ljspeech.py) for a
-heavily-commented example.
+commented example.
 
 For each training example, a preprocessor should:
 
@@ -47,20 +47,24 @@ After you've written your preprocessor, you can add it to [preprocess.py](prepro
 following the example of the other preprocessors in that file.
 
 
+### Non-English Data
 
-### Text Processing During Training and Eval
+If your training data is in a language other than English, you will probably want to change the
+text cleaning pipeline by setting the `cleaners` hyperparameter.
 
-Some additional processing is done to the text during training and eval. The text is run
-through the `to_sequence` function in [textinput.py](util/textinput.py).
+  * If your text is in a Latin script or can be transliterated to ASCII using the
+    [Unidecode](https://pypi.python.org/pypi/Unidecode) library, you can use the transliteration
+    pipeline by setting the hyperparameter `cleaners=transliteration_pipeline`.
 
-This performs several transformations:
-  1. Leading and trailing whitespace and quotation marks are removed.
-  2. Text is converted to ASCII by removing diacritics (e.g. "Crème brûlée" becomes "Creme brulee").
-  3. Numbers are converted to strings using the heuristics in [numbers.py](util/numbers.py).
-     *This is specific to English*.
-  4. Abbreviations are expanded (e.g. "Mr" becomes "Mister"). *This is also specific to English*.
-  5. Characters outside the input alphabet (ASCII characters and some punctuation) are removed.
-  6. Whitespace is collapsed so that every sequence of whitespace becomes a single ASCII space.
+  * If you don't want to transliterate, you can define a custom character set.
+    This allows you to train directly on the character set used in your data.
 
-**Several of these steps are inappropriate for non-English text and you may want to disable or
-modify them if you are not using English training data.**
+    To do so, edit [symbols.py](text/symbols.py) and change the `_characters` variable to be a
+    string containing the UTF-8 characters in your data. Then set the hyperparameter `cleaners=basic_pipeline`.
+
+  * If you're not sure which option to use, you can evaluate the transliteration pipeline like so:
+
+    ```python
+    from text import cleaners
+    cleaners.transliteration_pipeline('Здравствуйте')   # Replace with the text you want to try
+    ```
