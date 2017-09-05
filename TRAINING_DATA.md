@@ -50,21 +50,21 @@ following the example of the other preprocessors in that file.
 ### Non-English Data
 
 If your training data is in a language other than English, you will probably want to change the
-text cleaning pipeline by setting the `cleaners` hyperparameter.
+text cleaners by setting the `cleaners` hyperparameter.
 
   * If your text is in a Latin script or can be transliterated to ASCII using the
     [Unidecode](https://pypi.python.org/pypi/Unidecode) library, you can use the transliteration
-    pipeline by setting the hyperparameter `cleaners=transliteration_pipeline`.
+    cleaners by setting the hyperparameter `cleaners=transliteration_cleaners`.
 
   * If you don't want to transliterate, you can define a custom character set.
     This allows you to train directly on the character set used in your data.
 
     To do so, edit [symbols.py](text/symbols.py) and change the `_characters` variable to be a
-    string containing the UTF-8 characters in your data. Then set the hyperparameter `cleaners=basic_pipeline`.
+    string containing the UTF-8 characters in your data. Then set the hyperparameter `cleaners=basic_cleaners`.
 
-  * If you're not sure which option to use, you can evaluate the transliteration pipeline like so:
+  * If you're not sure which option to use, you can evaluate the transliteration cleaners like this:
 
     ```python
     from text import cleaners
-    cleaners.transliteration_pipeline('Здравствуйте')   # Replace with the text you want to try
+    cleaners.transliteration_cleaners('Здравствуйте')   # Replace with the text you want to try
     ```

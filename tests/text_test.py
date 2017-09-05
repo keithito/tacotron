@@ -14,7 +14,7 @@ def test_text_to_sequence():
   assert text_to_sequence('"A"_B', []) == [2, 3, 1]
   assert text_to_sequence('A {AW1 S} B', []) == [2, 64, 83, 132, 64, 3, 1]
   assert text_to_sequence('Hi', ['lowercase']) == [35, 36, 1]
-  assert text_to_sequence('A {AW1 S}  B', ['english_pipeline']) == [28, 64, 83, 132, 64, 29, 1]
+  assert text_to_sequence('A {AW1 S}  B', ['english_cleaners']) == [28, 64, 83, 132, 64, 29, 1]
 
 
 def test_sequence_to_text():
@@ -52,9 +52,9 @@ def test_expand_numbers():
   assert cleaners.expand_numbers('$3.50 for gas.') == 'three dollars, fifty cents for gas.'
 
 
-def test_pipelines():
+def test_cleaner_pipelines():
   text = 'Mr. Müller ate  2 Apples'
-  assert cleaners.english_pipeline(text) == 'mister muller ate two apples'
-  assert cleaners.transliteration_pipeline(text) == 'mr. muller ate 2 apples'
-  assert cleaners.basic_pipeline(text) == 'mr. müller ate 2 apples'
+  assert cleaners.english_cleaners(text) == 'mister muller ate two apples'
+  assert cleaners.transliteration_cleaners(text) == 'mr. muller ate 2 apples'
+  assert cleaners.basic_cleaners(text) == 'mr. müller ate 2 apples'
 
