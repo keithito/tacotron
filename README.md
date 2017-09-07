@@ -5,10 +5,12 @@ An implementation of Tacotron speech synthesis in TensorFlow.
 
 ### Audio Samples
 
-  * **[Audio Samples](https://keithito.github.io/audio-samples/)** after training for 877k steps (~11 days).
-    * Speech started to become intelligble around 20k steps.
-    * There hasn't been much improvement since around 200k steps -- loss has gone down, but it's hard to notice
-      listening to the audio.
+  * **[Audio Samples](https://keithito.github.io/audio-samples/)** from models trained using this repo.
+    * The first set was trained for 877K steps on the [LJ Speech Dataset](https://keithito.com/LJ-Speech-Dataset/)
+      * Speech started to become intelligble around 20K steps.
+      * Although loss continued to decrease, there wasn't much noticable improvement after ~250K steps.
+    * The second set was trained by [@MXGray](https://github.com/@MXGray) for 140K steps on the [Nancy Corpus](http://www.cstr.ed.ac.uk/projects/blizzard/2011/lessac_blizzard2011/).
+
 
 
 ## Background
