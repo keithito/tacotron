@@ -9,7 +9,7 @@ An implementation of Tacotron speech synthesis in TensorFlow.
     * The first set was trained for 877K steps on the [LJ Speech Dataset](https://keithito.com/LJ-Speech-Dataset/)
       * Speech started to become intelligble around 20K steps.
       * Although loss continued to decrease, there wasn't much noticable improvement after ~250K steps.
-    * The second set was trained by [@MXGray](https://github.com/@MXGray) for 140K steps on the [Nancy Corpus](http://www.cstr.ed.ac.uk/projects/blizzard/2011/lessac_blizzard2011/).
+    * The second set was trained by [@MXGray](https://github.com/MXGray) for 140K steps on the [Nancy Corpus](http://www.cstr.ed.ac.uk/projects/blizzard/2011/lessac_blizzard2011/).
 
 
 
