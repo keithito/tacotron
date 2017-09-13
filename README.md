@@ -28,13 +28,16 @@ Pull requests are welcome!
 ## Quick Start
 
 ### Installing dependencies
-Make sure you have installed Python 3 and [TensorFlow 1.3](https://www.tensorflow.org/install/). To
-get reasonable performance, install TensorFlow with GPU support.
 
-Then:
-```
-pip install -r requirements.txt
-```
+1. Install Python 3.
+
+2. Install [TensorFlow 1.3](https://www.tensorflow.org/install/). Install with GPU support if it's
+   available for your platform.
+
+3. Install requirements:
+   ```
+   pip install -r requirements.txt
+   ```
 
 
 ### Using a pre-trained model
