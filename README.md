@@ -28,17 +28,23 @@ Pull requests are welcome!
 ## Quick Start
 
 ### Installing dependencies
-Make sure you have installed Python 3 and [TensorFlow](https://www.tensorflow.org/install/). Then:
-```
-pip install -r requirements.txt
-```
+
+1. Install Python 3.
+
+2. Install [TensorFlow 1.3](https://www.tensorflow.org/install/). Install with GPU support if it's
+   available for your platform.
+
+3. Install requirements:
+   ```
+   pip install -r requirements.txt
+   ```
 
 
 ### Using a pre-trained model
 
 1. **Download and unpack a model**:
    ```
-   curl http://data.keithito.com/data/speech/tacotron-20170720.tar.bz2 | tar xj -C /tmp
+   curl http://data.keithito.com/data/speech/tacotron-20170720.tar.bz2 | tar xjC /tmp
    ```
 
 2. **Run the demo server**:
