@@ -39,8 +39,8 @@ def inv_spectrogram(spectrogram):
 def inv_spectrogram_tensorflow(spectrogram):
   '''Builds computational graph to convert spectrogram to waveform using TensorFlow.
 
-  Unlike inv_spectrogram, this does NOT apply inverse preemphasis. The caller should apply
-  on the output after running the graph.
+  Unlike inv_spectrogram, this does NOT invert the preemphasis. The caller should call
+  inv_preemphasis on the output after running the graph.
   '''
   S = _db_to_amp_tensorflow(_denormalize_tensorflow(spectrogram) + hparams.ref_level_db)
   return _griffin_lim_tensorflow(tf.pow(S, hparams.power))
