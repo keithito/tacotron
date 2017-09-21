@@ -67,6 +67,8 @@ class SynthesisResource:
   def on_get(self, req, res):
     if not req.params.get('text'):
       raise falcon.HTTPBadRequest()
+    hparams.max_iters = round(1000 * (float(len(req.params.get('text').split())) / 130)) # 130 words per minute (average reading speed in English)
+    synthesizer.update()
     res.data = synthesizer.synthesize(req.params.get('text'))
     res.content_type = 'audio/wav'
 
@@ -86,7 +88,6 @@ if __name__ == '__main__':
     help='Hyperparameter overrides as a comma-separated list of name=value pairs')
   args = parser.parse_args()
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-  hparams.max_iters = 100
   hparams.parse(args.hparams)
   print(hparams_debug_string())
   synthesizer.load(args.checkpoint)
