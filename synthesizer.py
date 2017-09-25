@@ -2,6 +2,7 @@ import io
 import numpy as np
 import tensorflow as tf
 from hparams import hparams
+from librosa import effects
 from models import create_model
 from text import text_to_sequence
 from util import audio
@@ -32,6 +33,8 @@ class Synthesizer:
       self.model.input_lengths: np.asarray([len(seq)], dtype=np.int32)
     }
     wav = self.session.run(self.wav_output, feed_dict=feed_dict)
+    wav = audio.inv_preemphasis(wav)
+    wav, _ = effects.trim(wav)
     out = io.BytesIO()
-    audio.save_wav(audio.inv_preemphasis(wav), out)
+    audio.save_wav(wav, out)
     return out.getvalue()
