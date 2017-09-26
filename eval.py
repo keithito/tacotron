@@ -45,7 +45,6 @@ def main():
     help='Hyperparameter overrides as a comma-separated list of name=value pairs')
   args = parser.parse_args()
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-  hparams.max_iters = 100
   hparams.parse(args.hparams)
   run_eval(args)
 
