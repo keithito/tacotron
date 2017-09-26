@@ -52,6 +52,16 @@ def melspectrogram(y):
   return _normalize(S)
 
 
+def find_endpoint(wav, threshold_db=-40, min_silence_sec=0.8):
+  window_length = int(hparams.sample_rate * min_silence_sec)
+  hop_length = int(window_length / 4)
+  threshold = _db_to_amp(threshold_db)
+  for x in range(hop_length, len(wav) - window_length, hop_length):
+    if np.max(wav[x:x+window_length]) < threshold:
+      return x + hop_length
+  return len(wav)
+
+
 def _griffin_lim(S):
   '''librosa implementation of Griffin-Lim
   Based on https://github.com/librosa/librosa/issues/434
