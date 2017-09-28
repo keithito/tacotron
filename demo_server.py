@@ -67,6 +67,8 @@ class SynthesisResource:
   def on_get(self, req, res):
     if not req.params.get('text'):
       raise falcon.HTTPBadRequest()
+    hparams.max_iters = round(1000 * (float(len(req.params.get('text').split())) / 130)) + 33 # 130 words per minute (average reading speed in English)
+    synthesizer.update()
     res.data = synthesizer.synthesize(req.params.get('text'))
     res.content_type = 'audio/wav'
 
