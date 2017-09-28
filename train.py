@@ -61,7 +61,8 @@ def train(log_dir, args):
   global_step = tf.Variable(0, name='global_step', trainable=False)
   with tf.variable_scope('model') as scope:
     model = create_model(args.model, hparams)
-    model.initialize(feeder.inputs, feeder.input_lengths, feeder.mel_targets, feeder.linear_targets)
+    model.initialize(feeder.inputs, feeder.input_lengths, feeder.speaker_ids,
+      feeder.mel_targets, feeder.linear_targets)
     model.add_loss()
     model.add_optimizer(global_step)
     stats = add_stats(model)

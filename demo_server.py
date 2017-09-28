@@ -67,7 +67,8 @@ class SynthesisResource:
   def on_get(self, req, res):
     if not req.params.get('text'):
       raise falcon.HTTPBadRequest()
-    res.data = synthesizer.synthesize(req.params.get('text'))
+    speaker_id = int(req.params.get('speaker_id') or 374)
+    res.data = synthesizer.synthesize(req.params.get('text'), speaker_id)
     res.content_type = 'audio/wav'
 
 
