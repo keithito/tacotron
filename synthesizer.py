@@ -29,12 +29,6 @@ class Synthesizer:
       self.model.update(hparams)
       self.wav_output = audio.inv_spectrogram_tensorflow(self.model.linear_outputs[0])
 
-    print('Loading checkpoint: %s' % self.checkpoint_path)
-    self.session = tf.Session()
-    self.session.run(tf.global_variables_initializer())
-    saver = tf.train.Saver()
-    saver.restore(self.session, self.checkpoint_path)
-
 
   def synthesize(self, text):
     cleaner_names = [x.strip() for x in hparams.cleaners.split(',')]
