@@ -26,7 +26,7 @@ class DataFeeder(threading.Thread):
 
     # Load metadata:
     self._datadir = os.path.dirname(metadata_filename)
-    with open(metadata_filename) as f:
+    with open(metadata_filename, encoding='utf-8') as f:
       self._metadata = [line.strip().split('|') for line in f]
       hours = sum((int(x[2]) for x in self._metadata)) * hparams.frame_shift_ms / (3600 * 1000)
       log('Loaded metadata for %d examples (%.2f hours)' % (len(self._metadata), hours))
