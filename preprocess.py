@@ -1,5 +1,6 @@
 import argparse
 import os
+import inspect
 from multiprocessing import cpu_count
 from tqdm import tqdm
 from datasets import blizzard, ljspeech
@@ -35,7 +36,7 @@ def write_metadata(metadata, out_dir):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', default=os.path.expanduser('~/tacotron'))
+  parser.add_argument('--base_dir', default=os.path.dirname(os.path.abspath(inspect.stack()[0][1])))
   parser.add_argument('--output', default='training')
   parser.add_argument('--dataset', required=True, choices=['blizzard', 'ljspeech'])
   parser.add_argument('--num_workers', type=int, default=cpu_count())
