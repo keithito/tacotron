@@ -31,8 +31,8 @@ Pull requests are welcome!
 
 1. Install Python 3.
 
-2. Install [TensorFlow 1.3](https://www.tensorflow.org/install/). Install with GPU support if it's
-   available for your platform.
+2. Install the latest version of [TensorFlow](https://www.tensorflow.org/install/) for your platform. For better
+   performance, install with GPU support if it's available. This code works with TensorFlow 1.3 or 1.4.
 
 3. Install requirements:
    ```
