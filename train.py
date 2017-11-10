@@ -3,6 +3,7 @@ from datetime import datetime
 import math
 import numpy as np
 import os
+import inspect
 import subprocess
 import time
 import tensorflow as tf
@@ -125,7 +126,7 @@ def train(log_dir, args):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', default=os.path.expanduser('~/tacotron'))
+  parser.add_argument('--base_dir', default=os.path.dirname(os.path.abspath(inspect.stack()[0][1])))
   parser.add_argument('--input', default='training/train.txt')
   parser.add_argument('--model', default='tacotron')
   parser.add_argument('--name', help='Name of the run. Used for logging. Defaults to model name.')
