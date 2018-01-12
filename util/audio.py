@@ -52,6 +52,11 @@ def melspectrogram(y):
   return _normalize(S)
 
 
+def inv_melspectrogram(melspectrogram):
+  S = _mel_to_linear(_db_to_amp(_denormalize(melspectrogram)))
+  return _griffin_lim(S)
+
+
 def find_endpoint(wav, threshold_db=-40, min_silence_sec=0.8):
   window_length = int(hparams.sample_rate * min_silence_sec)
   hop_length = int(window_length / 4)
@@ -121,6 +126,8 @@ def _stft_parameters():
 # Conversions:
 
 _mel_basis = None
+_inv_mel_basis = None
+
 
 def _linear_to_mel(spectrogram):
   global _mel_basis
@@ -128,24 +135,39 @@ def _linear_to_mel(spectrogram):
     _mel_basis = _build_mel_basis()
   return np.dot(_mel_basis, spectrogram)
 
+
+def _mel_to_linear(mel_spectrogram):
+  global _inv_mel_basis
+  if _inv_mel_basis is None:
+    _inv_mel_basis = np.linalg.pinv(_build_mel_basis())
+  return np.maximum(1e-10, np.dot(_inv_mel_basis, mel_spectrogram))
+
+
 def _build_mel_basis():
   n_fft = (hparams.num_freq - 1) * 2
-  return librosa.filters.mel(hparams.sample_rate, n_fft, n_mels=hparams.num_mels)
+  return librosa.filters.mel(hparams.sample_rate, n_fft, n_mels=hparams.num_mels,
+    fmin=hparams.min_mel_freq, fmax=hparams.max_mel_freq)
+
 
 def _amp_to_db(x):
   return 20 * np.log10(np.maximum(1e-5, x))
 
+
 def _db_to_amp(x):
   return np.power(10.0, x * 0.05)
+
 
 def _db_to_amp_tensorflow(x):
   return tf.pow(tf.ones(tf.shape(x)) * 10.0, x * 0.05)
 
+
 def _normalize(S):
   return np.clip((S - hparams.min_level_db) / -hparams.min_level_db, 0, 1)
 
+
 def _denormalize(S):
   return (np.clip(S, 0, 1) * -hparams.min_level_db) + hparams.min_level_db
+
 
 def _denormalize_tensorflow(S):
   return (tf.clip_by_value(S, 0, 1) * -hparams.min_level_db) + hparams.min_level_db
