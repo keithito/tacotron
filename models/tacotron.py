@@ -5,7 +5,7 @@ from text.symbols import symbols
 from util.infolog import log
 from .attention import LocationSensitiveAttention
 from .helpers import TacoTestHelper, TacoTrainingHelper
-from .modules import encoder_cbhg, post_cbhg, prenet
+from .modules import encoder, post_cbhg, prenet
 from .rnn_wrappers import DecoderPrenetWrapper, ConcatOutputAndAttentionWrapper
 
 
@@ -44,8 +44,14 @@ class Tacotron():
       embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, 512]
 
       # Encoder
-      prenet_outputs = prenet(embedded_inputs, is_training)                       # [N, T_in, 128]
-      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training)  # [N, T_in, 256]
+      encoder_outputs = encoder(
+        embedded_inputs,
+        input_lengths,
+        conv_layers=hp.encoder_conv_layers,
+        conv_width=hp.encoder_conv_width,
+        conv_channels=hp.encoder_conv_channels,
+        lstm_units=hp.encoder_lstm_units,
+        is_training=is_training)                                                 # [N, T_in, 512]
 
       # Attention
       attention_cell = AttentionWrapper(
@@ -96,7 +102,6 @@ class Tacotron():
       self.linear_targets = linear_targets
       log('Initialized Tacotron model. Dimensions: ')
       log('  embedding:               %d' % embedded_inputs.shape[-1])
-      log('  prenet out:              %d' % prenet_outputs.shape[-1])
       log('  encoder out:             %d' % encoder_outputs.shape[-1])
       log('  attention out:           %d' % attention_cell.output_size)
       log('  concat attn & out:       %d' % concat_cell.output_size)

@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.contrib.rnn import GRUCell
+from tensorflow.contrib.rnn import GRUCell, LSTMBlockCell
 
 
 def prenet(inputs, is_training, layer_sizes=[256, 128], scope=None):
@@ -12,14 +12,25 @@ def prenet(inputs, is_training, layer_sizes=[256, 128], scope=None):
   return x
 
 
-def encoder_cbhg(inputs, input_lengths, is_training):
-  return cbhg(
-    inputs,
-    input_lengths,
-    is_training,
-    scope='encoder_cbhg',
-    K=16,
-    projections=[128, 128])
+def encoder(inputs, input_lengths, conv_layers, conv_width, conv_channels, lstm_units, is_training):
+  # Convolutional layers
+  with tf.variable_scope('encoder'):
+    x = inputs
+    for i in range(conv_layers):
+      activation = tf.nn.relu if i < conv_layers - 1 else None
+      x = conv1d(x, conv_width, conv_channels, activation, is_training, 'encoder_conv_%d' % i)
+
+    # 2-layer bidirectional LSTM:
+    outputs, states = tf.nn.bidirectional_dynamic_rnn(
+      LSTMBlockCell(lstm_units),
+      LSTMBlockCell(lstm_units),
+      x,
+      sequence_length=input_lengths,
+      dtype=tf.float32,
+      scope='encoder_lstm')
+
+    # Concatentate forward and backwards:
+    return tf.concat(outputs, axis=2)
 
 
 def post_cbhg(inputs, input_dim, is_training):

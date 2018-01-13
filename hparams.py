@@ -22,7 +22,14 @@ hparams = tf.contrib.training.HParams(
   # Model:
   # TODO: add more configurable hparams
   outputs_per_step=5,
+
   embedding_dim=512,
+
+  encoder_conv_layers=3,
+  encoder_conv_width=5,
+  encoder_conv_channels=512,
+  encoder_lstm_units=256,     # For each direction
+
 
   # Training:
   batch_size=32,
