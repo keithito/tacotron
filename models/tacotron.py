@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.contrib.rnn import GRUCell, MultiRNNCell, OutputProjectionWrapper, ResidualWrapper
+from tensorflow.contrib.rnn import LSTMBlockCell, MultiRNNCell, OutputProjectionWrapper, ResidualWrapper
 from tensorflow.contrib.seq2seq import BasicDecoder, AttentionWrapper
 from text.symbols import symbols
 from util.infolog import log
@@ -55,30 +55,30 @@ class Tacotron():
 
       # Attention
       attention_cell = AttentionWrapper(
-        DecoderPrenetWrapper(GRUCell(256), is_training),
-        LocationSensitiveAttention(256, encoder_outputs),
+        DecoderPrenetWrapper(LSTMBlockCell(hp.attention_depth), is_training),
+        LocationSensitiveAttention(hp.attention_depth, encoder_outputs),
         alignment_history=True,
-        output_attention=False)                                                  # [N, T_in, 256]
+        output_attention=False)                                                  # [N, T_in, 128]
 
       # Concatenate attention context vector and RNN cell output into a 512D vector.
       concat_cell = ConcatOutputAndAttentionWrapper(attention_cell)              # [N, T_in, 512]
 
       # Decoder (layers specified bottom to top):
       decoder_cell = MultiRNNCell([
-          OutputProjectionWrapper(concat_cell, 256),
-          ResidualWrapper(GRUCell(256)),
-          ResidualWrapper(GRUCell(256))
-        ], state_is_tuple=True)                                                  # [N, T_in, 256]
+        concat_cell,
+        LSTMBlockCell(hp.decoder_lstm_units),
+        LSTMBlockCell(hp.decoder_lstm_units)
+      ], state_is_tuple=True)                                                  # [N, T_in, 1024]
 
       # Project onto r mel spectrograms (predict r outputs at each RNN step):
       output_cell = OutputProjectionWrapper(decoder_cell, hp.num_mels * hp.outputs_per_step)
-      decoder_init_state = output_cell.zero_state(batch_size=batch_size, dtype=tf.float32)
 
       if is_training:
         helper = TacoTrainingHelper(inputs, mel_targets, hp.num_mels, hp.outputs_per_step)
       else:
         helper = TacoTestHelper(batch_size, hp.num_mels, hp.outputs_per_step)
 
+      decoder_init_state = output_cell.zero_state(batch_size=batch_size, dtype=tf.float32)
       (decoder_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
         BasicDecoder(output_cell, helper, decoder_init_state),
         maximum_iterations=hp.max_iters)                                        # [N, T_out/r, M*r]
