@@ -27,12 +27,14 @@ def add_stats(model):
   with tf.variable_scope('stats') as scope:
     tf.summary.histogram('linear_outputs', model.linear_outputs)
     tf.summary.histogram('linear_targets', model.linear_targets)
+    tf.summary.histogram('decoder_outputs', model.decoder_outputs)
     tf.summary.histogram('mel_outputs', model.mel_outputs)
     tf.summary.histogram('mel_targets', model.mel_targets)
+    tf.summary.scalar('loss_decoder', model.decoder_loss)
     tf.summary.scalar('loss_mel', model.mel_loss)
     tf.summary.scalar('loss_linear', model.linear_loss)
-    tf.summary.scalar('learning_rate', model.learning_rate)
     tf.summary.scalar('loss', model.loss)
+    tf.summary.scalar('learning_rate', model.learning_rate)
     gradient_norms = [tf.norm(grad) for grad in model.gradients]
     tf.summary.histogram('gradient_norm', gradient_norms)
     tf.summary.scalar('max_gradient_norm', tf.reduce_max(gradient_norms))

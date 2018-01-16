@@ -20,7 +20,6 @@ hparams = tf.contrib.training.HParams(
   ref_level_db=20,
 
   # Model:
-  # TODO: add more configurable hparams
   outputs_per_step=5,
   embedding_dim=512,
   encoder_conv_layers=3,
@@ -29,7 +28,9 @@ hparams = tf.contrib.training.HParams(
   encoder_lstm_units=256,     # For each direction
   attention_depth=128,
   decoder_lstm_units=1024,
-
+  postnet_conv_layers=5,
+  postnet_conv_width=5,
+  postnet_conv_channels=512,
 
   # Training:
   batch_size=32,

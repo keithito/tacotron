@@ -33,6 +33,15 @@ def encoder(inputs, input_lengths, conv_layers, conv_width, conv_channels, lstm_
     return tf.concat(outputs, axis=2)
 
 
+def postnet(inputs, layers, conv_width, channels, is_training):
+  x = inputs
+  with tf.variable_scope('decoder_postnet'):
+    for i in range(layers):
+      activation = tf.nn.tanh if i < layers - 1 else None
+      x = conv1d(x, conv_width, channels, activation, is_training, 'postnet_conv_%d' % i)
+  return tf.layers.dense(x, inputs.shape[2])   # Project to input shape
+
+
 def post_cbhg(inputs, input_dim, is_training):
   return cbhg(
     inputs,

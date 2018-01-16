@@ -5,7 +5,7 @@ from text.symbols import symbols
 from util.infolog import log
 from .attention import LocationSensitiveAttention
 from .helpers import TacoTestHelper, TacoTrainingHelper
-from .modules import encoder, post_cbhg, prenet
+from .modules import encoder, post_cbhg, prenet, postnet
 from .rnn_wrappers import DecoderPrenetWrapper, ConcatOutputAndAttentionWrapper
 
 
@@ -79,22 +79,32 @@ class Tacotron():
         helper = TacoTestHelper(batch_size, hp.num_mels, hp.outputs_per_step)
 
       decoder_init_state = output_cell.zero_state(batch_size=batch_size, dtype=tf.float32)
-      (decoder_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
+      (multi_decoder_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
         BasicDecoder(output_cell, helper, decoder_init_state),
         maximum_iterations=hp.max_iters)                                        # [N, T_out/r, M*r]
 
-      # Reshape outputs to be one output per entry
-      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels]) # [N, T_out, M]
+      # Reshape outputs to be one output per entry                                [N, T_out, M]
+      decoder_outputs = tf.reshape(multi_decoder_outputs, [batch_size, -1, hp.num_mels])
+
+      # Postnet: predicts a residual
+      postnet_outputs = postnet(
+        decoder_outputs,
+        layers=hp.postnet_conv_layers,
+        conv_width=hp.postnet_conv_width,
+        channels=hp.postnet_conv_channels,
+        is_training=is_training)
+      mel_outputs = decoder_outputs + postnet_outputs
 
       # Add post-processing CBHG:
-      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training)           # [N, T_out, 256]
-      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)               # [N, T_out, F]
+      post_cbhg_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training)      # [N, T_out, 256]
+      linear_outputs = tf.layers.dense(post_cbhg_outputs, hp.num_freq)          # [N, T_out, F]
 
       # Grab alignments from the final decoder state:
       alignments = tf.transpose(final_decoder_state[0].alignment_history.stack(), [1, 2, 0])
 
       self.inputs = inputs
       self.input_lengths = input_lengths
+      self.decoder_outputs = decoder_outputs
       self.mel_outputs = mel_outputs
       self.linear_outputs = linear_outputs
       self.alignments = alignments
@@ -108,7 +118,7 @@ class Tacotron():
       log('  decoder cell out:        %d' % decoder_cell.output_size)
       log('  decoder out (%d frames):  %d' % (hp.outputs_per_step, decoder_outputs.shape[-1]))
       log('  decoder out (1 frame):   %d' % mel_outputs.shape[-1])
-      log('  postnet out:             %d' % post_outputs.shape[-1])
+      log('  post cbhg out:           %d' % post_cbhg_outputs.shape[-1])
       log('  linear out:              %d' % linear_outputs.shape[-1])
 
 
@@ -116,12 +126,13 @@ class Tacotron():
     '''Adds loss to the model. Sets "loss" field. initialize must have been called.'''
     with tf.variable_scope('loss') as scope:
       hp = self._hparams
+      self.decoder_loss = tf.reduce_mean(tf.abs(self.mel_targets - self.decoder_outputs))
       self.mel_loss = tf.reduce_mean(tf.abs(self.mel_targets - self.mel_outputs))
       l1 = tf.abs(self.linear_targets - self.linear_outputs)
       # Prioritize loss for frequencies under 3000 Hz.
       n_priority_freq = int(3000 / (hp.sample_rate * 0.5) * hp.num_freq)
       self.linear_loss = 0.5 * tf.reduce_mean(l1) + 0.5 * tf.reduce_mean(l1[:,:,0:n_priority_freq])
-      self.loss = self.mel_loss + self.linear_loss
+      self.loss = self.decoder_loss + self.mel_loss + self.linear_loss
 
 
   def add_optimizer(self, global_step):
