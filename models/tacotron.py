@@ -5,7 +5,7 @@ from text.symbols import symbols
 from util.infolog import log
 from .attention import LocationSensitiveAttention
 from .helpers import TacoTestHelper, TacoTrainingHelper
-from .modules import encoder, post_cbhg, prenet, postnet
+from .modules import conv_and_lstm, prenet, postnet
 from .rnn_wrappers import DecoderPrenetWrapper, ConcatOutputAndAttentionWrapper
 
 
@@ -44,14 +44,15 @@ class Tacotron():
       embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, 512]
 
       # Encoder
-      encoder_outputs = encoder(
+      encoder_outputs = conv_and_lstm(
         embedded_inputs,
         input_lengths,
         conv_layers=hp.encoder_conv_layers,
         conv_width=hp.encoder_conv_width,
         conv_channels=hp.encoder_conv_channels,
         lstm_units=hp.encoder_lstm_units,
-        is_training=is_training)                                                 # [N, T_in, 512]
+        is_training=is_training,
+        scope='encoder')                                                         # [N, T_in, 512]
 
       # Attention
       attention_cell = AttentionWrapper(
@@ -95,9 +96,17 @@ class Tacotron():
         is_training=is_training)
       mel_outputs = decoder_outputs + postnet_outputs
 
-      # Add post-processing CBHG:
-      post_cbhg_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training)      # [N, T_out, 256]
-      linear_outputs = tf.layers.dense(post_cbhg_outputs, hp.num_freq)          # [N, T_out, F]
+      # Convert to linear using a similar architecture as the encoder:
+      expand_outputs = conv_and_lstm(
+        mel_outputs,
+        None,
+        conv_layers=hp.expand_conv_layers,
+        conv_width=hp.expand_conv_width,
+        conv_channels=hp.expand_conv_channels,
+        lstm_units=hp.expand_lstm_units,
+        is_training=is_training,
+        scope='expand')                                                        # [N, T_in, 512]
+      linear_outputs = tf.layers.dense(expand_outputs, hp.num_freq)            # [N, T_out, F]
 
       # Grab alignments from the final decoder state:
       alignments = tf.transpose(final_decoder_state[0].alignment_history.stack(), [1, 2, 0])
@@ -118,7 +127,7 @@ class Tacotron():
       log('  decoder cell out:        %d' % decoder_cell.output_size)
       log('  decoder out (%d frames):  %d' % (hp.outputs_per_step, decoder_outputs.shape[-1]))
       log('  decoder out (1 frame):   %d' % mel_outputs.shape[-1])
-      log('  post cbhg out:           %d' % post_cbhg_outputs.shape[-1])
+      log('  expand out:              %d' % expand_outputs.shape[-1])
       log('  linear out:              %d' % linear_outputs.shape[-1])
 
 
@@ -128,10 +137,12 @@ class Tacotron():
       hp = self._hparams
       self.decoder_loss = tf.reduce_mean(tf.abs(self.mel_targets - self.decoder_outputs))
       self.mel_loss = tf.reduce_mean(tf.abs(self.mel_targets - self.mel_outputs))
+
+      # Prioritize loss for frequencies under 2000 Hz.
       l1 = tf.abs(self.linear_targets - self.linear_outputs)
-      # Prioritize loss for frequencies under 3000 Hz.
-      n_priority_freq = int(3000 / (hp.sample_rate * 0.5) * hp.num_freq)
+      n_priority_freq = int(2000 / (hp.sample_rate * 0.5) * hp.num_freq)
       self.linear_loss = 0.5 * tf.reduce_mean(l1) + 0.5 * tf.reduce_mean(l1[:,:,0:n_priority_freq])
+
       self.loss = self.decoder_loss + self.mel_loss + self.linear_loss
 
 

@@ -12,13 +12,14 @@ def prenet(inputs, is_training, layer_sizes=[256, 128], scope=None):
   return x
 
 
-def encoder(inputs, input_lengths, conv_layers, conv_width, conv_channels, lstm_units, is_training):
+def conv_and_lstm(inputs, input_lengths, conv_layers, conv_width, conv_channels, lstm_units,
+                  is_training, scope):
   # Convolutional layers
-  with tf.variable_scope('encoder'):
+  with tf.variable_scope(scope):
     x = inputs
     for i in range(conv_layers):
       activation = tf.nn.relu if i < conv_layers - 1 else None
-      x = conv1d(x, conv_width, conv_channels, activation, is_training, 'encoder_conv_%d' % i)
+      x = conv1d(x, conv_width, conv_channels, activation, is_training, 'conv_%d' % i)
 
     # 2-layer bidirectional LSTM:
     outputs, states = tf.nn.bidirectional_dynamic_rnn(
@@ -40,74 +41,6 @@ def postnet(inputs, layers, conv_width, channels, is_training):
       activation = tf.nn.tanh if i < layers - 1 else None
       x = conv1d(x, conv_width, channels, activation, is_training, 'postnet_conv_%d' % i)
   return tf.layers.dense(x, inputs.shape[2])   # Project to input shape
-
-
-def post_cbhg(inputs, input_dim, is_training):
-  return cbhg(
-    inputs,
-    None,
-    is_training,
-    scope='post_cbhg',
-    K=8,
-    projections=[256, input_dim])
-
-
-def cbhg(inputs, input_lengths, is_training, scope, K, projections):
-  with tf.variable_scope(scope):
-    with tf.variable_scope('conv_bank'):
-      # Convolution bank: concatenate on the last axis to stack channels from all convolutions
-      conv_outputs = tf.concat(
-        [conv1d(inputs, k, 128, tf.nn.relu, is_training, 'conv1d_%d' % k) for k in range(1, K+1)],
-        axis=-1
-      )
-
-    # Maxpooling:
-    maxpool_output = tf.layers.max_pooling1d(
-      conv_outputs,
-      pool_size=2,
-      strides=1,
-      padding='same')
-
-    # Two projection layers:
-    proj1_output = conv1d(maxpool_output, 3, projections[0], tf.nn.relu, is_training, 'proj_1')
-    proj2_output = conv1d(proj1_output, 3, projections[1], None, is_training, 'proj_2')
-
-    # Residual connection:
-    highway_input = proj2_output + inputs
-
-    # Handle dimensionality mismatch:
-    if highway_input.shape[2] != 128:
-      highway_input = tf.layers.dense(highway_input, 128)
-
-    # 4-layer HighwayNet:
-    for i in range(4):
-      highway_input = highwaynet(highway_input, 'highway_%d' % (i+1))
-    rnn_input = highway_input
-
-    # Bidirectional RNN
-    outputs, states = tf.nn.bidirectional_dynamic_rnn(
-      GRUCell(128),
-      GRUCell(128),
-      rnn_input,
-      sequence_length=input_lengths,
-      dtype=tf.float32)
-    return tf.concat(outputs, axis=2)  # Concat forward and backward
-
-
-def highwaynet(inputs, scope):
-  with tf.variable_scope(scope):
-    H = tf.layers.dense(
-      inputs,
-      units=128,
-      activation=tf.nn.relu,
-      name='H')
-    T = tf.layers.dense(
-      inputs,
-      units=128,
-      activation=tf.nn.sigmoid,
-      name='T',
-      bias_initializer=tf.constant_initializer(-1.0))
-    return H * T + inputs * (1.0 - T)
 
 
 def conv1d(inputs, kernel_size, channels, activation, is_training, scope):
