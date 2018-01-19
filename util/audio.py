@@ -48,7 +48,7 @@ def inv_spectrogram_tensorflow(spectrogram):
 
 def melspectrogram(y):
   D = _stft(preemphasis(y))
-  S = _amp_to_db(_linear_to_mel(np.abs(D)))
+  S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
   return _normalize(S)
 
 
