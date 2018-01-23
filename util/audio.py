@@ -16,16 +16,8 @@ def save_wav(wav, path):
   librosa.output.write_wav(path, wav.astype(np.int16), hparams.sample_rate)
 
 
-def preemphasis(x):
-  return signal.lfilter([1, -hparams.preemphasis], [1], x)
-
-
-def inv_preemphasis(x):
-  return signal.lfilter([1], [1, -hparams.preemphasis], x)
-
-
 def spectrogram(y):
-  D = _stft(preemphasis(y))
+  D = _stft(y)
   S = _amp_to_db(np.abs(D)) - hparams.ref_level_db
   return _normalize(S)
 
@@ -33,7 +25,7 @@ def spectrogram(y):
 def inv_spectrogram(spectrogram):
   '''Converts spectrogram to waveform using librosa'''
   S = _db_to_amp(_denormalize(spectrogram) + hparams.ref_level_db)  # Convert back to linear
-  return inv_preemphasis(_griffin_lim(S ** hparams.power))          # Reconstruct phase
+  return _griffin_lim(S ** hparams.power)          # Reconstruct phase
 
 
 def inv_spectrogram_tensorflow(spectrogram):
@@ -47,14 +39,9 @@ def inv_spectrogram_tensorflow(spectrogram):
 
 
 def melspectrogram(y):
-  D = _stft(preemphasis(y))
+  D = _stft(y)
   S = _amp_to_db(_linear_to_mel(np.abs(D)))
   return _normalize(S)
-
-
-def inv_melspectrogram(melspectrogram):
-  S = _mel_to_linear(_db_to_amp(_denormalize(melspectrogram)))
-  return _griffin_lim(S)
 
 
 def find_endpoint(wav, threshold_db=-40, min_silence_sec=0.8):
@@ -126,7 +113,6 @@ def _stft_parameters():
 # Conversions:
 
 _mel_basis = None
-_inv_mel_basis = None
 
 
 def _linear_to_mel(spectrogram):
@@ -134,13 +120,6 @@ def _linear_to_mel(spectrogram):
   if _mel_basis is None:
     _mel_basis = _build_mel_basis()
   return np.dot(_mel_basis, spectrogram)
-
-
-def _mel_to_linear(mel_spectrogram):
-  global _inv_mel_basis
-  if _inv_mel_basis is None:
-    _inv_mel_basis = np.linalg.pinv(_build_mel_basis())
-  return np.maximum(1e-10, np.dot(_inv_mel_basis, mel_spectrogram))
 
 
 def _build_mel_basis():
