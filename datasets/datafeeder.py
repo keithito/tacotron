@@ -5,11 +5,12 @@ import tensorflow as tf
 import threading
 import time
 import traceback
+from hparams import hparams
 from text import cmudict, text_to_sequence
 from util.infolog import log
 
 
-_batches_per_group = 32
+_batches_per_group = hparams.batch_size
 _p_cmudict = 0.5
 _pad = 0
 
@@ -52,15 +53,15 @@ class DataFeeder(threading.Thread):
     # Load CMUDict: If enabled, this will randomly substitute some words in the training data with
     # their ARPABet equivalents, which will allow you to also pass ARPABet to the model for
     # synthesis (useful for proper nouns, etc.)
-    if hparams.use_cmudict:
-      cmudict_path = os.path.join(self._datadir, 'cmudict-0.7b')
-      if not os.path.isfile(cmudict_path):
-        raise Exception('If use_cmudict=True, you must download ' +
-          'http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/cmudict-0.7b to %s'  % cmudict_path)
-      self._cmudict = cmudict.CMUDict(cmudict_path, keep_ambiguous=False)
-      log('Loaded CMUDict with %d unambiguous entries' % len(self._cmudict))
-    else:
-      self._cmudict = None
+    # if hparams.use_cmudict:
+    #   cmudict_path = os.path.join(self._datadir, 'cmudict-0.7b')
+    #   if not os.path.isfile(cmudict_path):
+    #     raise Exception('If use_cmudict=True, you must download ' +
+    #       'http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/cmudict-0.7b to %s'  % cmudict_path)
+    #   self._cmudict = cmudict.CMUDict(cmudict_path, keep_ambiguous=False)
+    #   log('Loaded CMUDict with %d unambiguous entries' % len(self._cmudict))
+    # else:
+    #   self._cmudict = None
 
 
   def start_in_session(self, session):
@@ -86,8 +87,10 @@ class DataFeeder(threading.Thread):
     examples = [self._get_next_example() for i in range(n * _batches_per_group)]
 
     # Bucket examples based on similar output sequence length for efficiency:
-    examples.sort(key=lambda x: x[-1])
+    examples.sort(key=lambda x: x[-1]) # sort by sequence length
     batches = [examples[i:i+n] for i in range(0, len(examples), n)]
+    # shape = (batch_size, _batches_per_group, [input, mel, linear, len])
+    # batches as one batch group
     random.shuffle(batches)
 
     log('Generated %d batches of size %d in %.03f sec' % (len(batches), n, time.time() - start))
@@ -105,8 +108,8 @@ class DataFeeder(threading.Thread):
     self._offset += 1
 
     text = meta[3]
-    if self._cmudict and random.random() < _p_cmudict:
-      text = ' '.join([self._maybe_get_arpabet(word) for word in text.split(' ')])
+    # if self._cmudict and random.random() < _p_cmudict:
+    #   text = ' '.join([self._maybe_get_arpabet(word) for word in text.split(' ')])
 
     input_data = np.asarray(text_to_sequence(text, self._cleaner_names), dtype=np.int32)
     linear_target = np.load(os.path.join(self._datadir, meta[0]))

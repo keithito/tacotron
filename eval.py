@@ -5,19 +5,22 @@ from hparams import hparams, hparams_debug_string
 from synthesizer import Synthesizer
 
 
-sentences = [
-  # From July 8, 2017 New York Times:
-  'Scientists at the CERN laboratory say they have discovered a new particle.',
-  'There’s a way to measure the acute emotional intelligence that has never gone out of style.',
-  'President Trump met with other leaders at the Group of 20 conference.',
-  'The Senate\'s bill to repeal and replace the Affordable Care Act is now imperiled.',
-  # From Google's Tacotron example page:
-  'Generative adversarial network or variational auto-encoder.',
-  'The buses aren\'t the problem, they actually provide a solution.',
-  'Does the quick brown fox jump over the lazy dog?',
-  'Talib Kweli confirmed to AllHipHop that he will be releasing an album in the next year.',
-]
+#sentences = [
+#  # From July 8, 2017 New York Times:
+#  'Scientists at the CERN laboratory say they have discovered a new particle.',
+#  'There’s a way to measure the acute emotional intelligence that has never gone out of style.',
+#  'President Trump met with other leaders at the Group of 20 conference.',
+#  'The Senate\'s bill to repeal and replace the Affordable Care Act is now imperiled.',
+#  # From Google's Tacotron example page:
+#  'Generative adversarial network or variational auto-encoder.',
+#  'The buses aren\'t the problem, they actually provide a solution.',
+#  'Does the quick brown fox jump over the lazy dog?',
+#  'Talib Kweli confirmed to AllHipHop that he will be releasing an album in the next year.',
+#]
 
+sentences = [
+  'j v4 x i1 m ei3 g uo2 c an1 ii i4 vv van4 ii i3 c ao2 n i3 ii i1 f en4 zh ix1 ch ix2 k e4 l in2 d un4 x iang4 b o1 h ei1 p ai4 b ing1 d e5 j ve2 ii i4 aa an4 zh un3 b ei4 z ai4 b en3 vv ve4 sh ang4 x vn2 j in4 x ing2 b iao3 j ve2',
+]
 
 def get_output_base_path(checkpoint_path):
   base_dir = os.path.dirname(checkpoint_path)
