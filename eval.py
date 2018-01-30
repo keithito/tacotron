@@ -19,7 +19,8 @@ from synthesizer import Synthesizer
 #]
 
 sentences = [
-  'j v4 x i1 m ei3 g uo2 c an1 ii i4 vv van4 ii i3 c ao2 n i3 ii i1 f en4 zh ix1 ch ix2 k e4 l in2 d un4 x iang4 b o1 h ei1 p ai4 b ing1 d e5 j ve2 ii i4 aa an4 zh un3 b ei4 z ai4 b en3 vv ve4 sh ang4 x vn2 j in4 x ing2 b iao3 j ve2',
+  "yi1 xiang1 gang3 de5 kang4 ri4 jiu4 wang2 yun4 dong4 yi3 jiu4 wang2 wen2 hua4 yun4 dong4 wei2 zhu3 yao4 xing2 shi4",
+  'jv4 xi1 mei3 guo2 can1 iii4 vvvan4 iii3 cao2 ni3 iii1 fen4 zh ix1 ch ix2 k e4 l in2 d un4 x iang4 b o1 h ei1 p ai4 b ing1 d e5 j ve2 ii i4 aa an4 zh un3 b ei4 z ai4 b en3 vv ve4 sh ang4 x vn2 j in4 x ing2 b iao3 j ve2',
 ]
 
 def get_output_base_path(checkpoint_path):

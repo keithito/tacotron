@@ -24,21 +24,21 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
   executor = ProcessPoolExecutor(max_workers=num_workers)
   futures = []
   index = 1
-  trn_files = glob.glob(os.path.join(in_dir, 'data', 'C4*.trn'))
+  trn_files = glob.glob(os.path.join(in_dir, 'data', 'A*.trn'))
 
   for trn in trn_files:
     with open(trn) as f:
       f.readline()
+      pinyin = f.readline().strip('\n')
       f.readline()
-      phone = f.readline().strip('\n')
       wav_file = trn[:-4]
-      task = partial(_process_utterance, out_dir, index, wav_file, phone)
+      task = partial(_process_utterance, out_dir, index, wav_file, pinyin)
       futures.append(executor.submit(task))
       index += 1
   return [future.result() for future in tqdm(futures)]
 
 
-def _process_utterance(out_dir, index, wav_path, phone):
+def _process_utterance(out_dir, index, wav_path, pinyin):
   '''Preprocesses a single utterance audio/text pair.
 
   This writes the mel and linear scale spectrograms to disk and returns a tuple to write
@@ -48,7 +48,7 @@ def _process_utterance(out_dir, index, wav_path, phone):
     out_dir: The directory to write the spectrograms into
     index: The numeric index to use in the spectrogram filenames.
     wav_path: Path to the audio file containing the speech input
-    phone: The phone of Chinese spoken in the input audio file
+    pinyin: The pinyin of Chinese spoken in the input audio file
 
   Returns:
     A (spectrogram_filename, mel_filename, n_frames, text) tuple to write to train.txt
@@ -71,4 +71,4 @@ def _process_utterance(out_dir, index, wav_path, phone):
   np.save(os.path.join(out_dir, mel_filename), mel_spectrogram.T, allow_pickle=False)
 
   # Return a tuple describing this training example:
-  return (spectrogram_filename, mel_filename, n_frames, phone)
+  return (spectrogram_filename, mel_filename, n_frames, pinyin)
