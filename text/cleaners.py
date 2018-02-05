@@ -4,14 +4,11 @@ Cleaners are transformations that run over the input text at both training and e
 Cleaners can be selected by passing a comma-delimited list of cleaner names as the "cleaners"
 hyperparameter. Some cleaners are English-specific. You'll typically want to use:
   1. "english_cleaners" for English text
-  2. "transliteration_cleaners" for non-English text that can be transliterated to ASCII using
-     the Unidecode library (https://pypi.python.org/pypi/Unidecode)
-  3. "basic_cleaners" if you do not want to transliterate (in this case, you should also update
+  2. "basic_cleaners" if you do not want to transliterate (in this case, you should also update
      the symbols in symbols.py to match your data).
 '''
 
 import re
-from unidecode import unidecode
 from .numbers import normalize_numbers
 
 
@@ -60,7 +57,7 @@ def collapse_whitespace(text):
 
 
 def convert_to_ascii(text):
-  return unidecode(text)
+  return re.sub(r'[^\x00-\x7F]+', '', text)   # This simply strips non-ASCII characters.
 
 
 def basic_cleaners(text):
