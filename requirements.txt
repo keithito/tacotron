@@ -1,7 +1,6 @@
 # Note: this doesn't include tensorflow or tensorflow-gpu because the package you need to install
 # depends on your platform. It is assumed you have already installed tensorflow.
 falcon==1.2.0
-inflect==0.2.5
 librosa==0.5.1
 matplotlib==2.0.2
 numpy==1.13.0
