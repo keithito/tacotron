@@ -24,13 +24,12 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
   executor = ProcessPoolExecutor(max_workers=num_workers)
   futures = []
   index = 1
-  trn_files = glob.glob(os.path.join(in_dir, 'data', 'A*.trn'))
+  trn_files = glob.glob(os.path.join(in_dir, 'data', '*.trn'))
 
   for trn in trn_files:
     with open(trn) as f:
       f.readline()
       pinyin = f.readline().strip('\n')
-      f.readline()
       wav_file = trn[:-4]
       task = partial(_process_utterance, out_dir, index, wav_file, pinyin)
       futures.append(executor.submit(task))

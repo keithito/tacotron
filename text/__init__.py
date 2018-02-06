@@ -24,9 +24,6 @@ def text_to_sequence(text, cleaner_names):
     Returns:
       List of integers corresponding to the symbols in the text
   '''
-  # text = _clean_text(text, cleaner_names)
-  # phones = text.split(' ')
-  # sequence = [_symbol_to_id[p] for p in phones]
   sequence = []
 
   # Check for curly braces and treat their contents as ARPAbet:
@@ -54,8 +51,6 @@ def sequence_to_text(sequence):
       if len(s) > 1 and s[0] == '@':
         s = '{%s}' % s[1:]
       result += s
-    else:
-      raise Exception("Unknown symbol")
   return result.replace('}{', ' ')
 
 
