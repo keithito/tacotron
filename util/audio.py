@@ -16,16 +16,8 @@ def save_wav(wav, path):
   librosa.output.write_wav(path, wav.astype(np.int16), hparams.sample_rate)
 
 
-def preemphasis(x):
-  return signal.lfilter([1, -hparams.preemphasis], [1], x)
-
-
-def inv_preemphasis(x):
-  return signal.lfilter([1], [1, -hparams.preemphasis], x)
-
-
 def spectrogram(y):
-  D = _stft(preemphasis(y))
+  D = _stft(y)
   S = _amp_to_db(np.abs(D)) - hparams.ref_level_db
   return _normalize(S)
 
@@ -33,21 +25,17 @@ def spectrogram(y):
 def inv_spectrogram(spectrogram):
   '''Converts spectrogram to waveform using librosa'''
   S = _db_to_amp(_denormalize(spectrogram) + hparams.ref_level_db)  # Convert back to linear
-  return inv_preemphasis(_griffin_lim(S ** hparams.power))          # Reconstruct phase
+  return _griffin_lim(S ** hparams.power)                           # Reconstruct phase
 
 
 def inv_spectrogram_tensorflow(spectrogram):
-  '''Builds computational graph to convert spectrogram to waveform using TensorFlow.
-
-  Unlike inv_spectrogram, this does NOT invert the preemphasis. The caller should call
-  inv_preemphasis on the output after running the graph.
-  '''
+  '''Builds computational graph to convert spectrogram to waveform using TensorFlow.'''
   S = _db_to_amp_tensorflow(_denormalize_tensorflow(spectrogram) + hparams.ref_level_db)
   return _griffin_lim_tensorflow(tf.pow(S, hparams.power))
 
 
 def melspectrogram(y):
-  D = _stft(preemphasis(y))
+  D = _stft(y)
   S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
   return _normalize(S)
 

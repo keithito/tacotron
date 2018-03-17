@@ -15,7 +15,6 @@ hparams = tf.contrib.training.HParams(
   sample_rate=22000,
   frame_length_ms=50,
   frame_shift_ms=12.5,
-  preemphasis=0.97,
   min_level_db=-100,
   ref_level_db=20,
 
