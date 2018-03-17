@@ -39,7 +39,7 @@ class Tacotron():
 
       # Embeddings
       embedding_table = tf.get_variable(
-        'embedding', [len(symbols), 256], dtype=tf.float32,
+        'embedding', [len(symbols), hp.embedding_dim], dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=0.5))
       embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, 256]
 
