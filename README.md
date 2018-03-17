@@ -75,7 +75,7 @@ Pull requests are welcome!
    After unpacking, your tree should look like this for LJ Speech:
    ```
    tacotron
-     |- LJSpeech-1.0
+     |- LJSpeech-1.1
          |- metadata.csv
          |- wavs
    ```
