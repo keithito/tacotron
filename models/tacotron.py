@@ -1,8 +1,9 @@
 import tensorflow as tf
 from tensorflow.contrib.rnn import GRUCell, MultiRNNCell, OutputProjectionWrapper, ResidualWrapper
-from tensorflow.contrib.seq2seq import BasicDecoder, BahdanauAttention, AttentionWrapper
+from tensorflow.contrib.seq2seq import BasicDecoder, AttentionWrapper
 from text.symbols import symbols
 from util.infolog import log
+from .attention import LocationSensitiveAttention
 from .helpers import TacoTestHelper, TacoTrainingHelper
 from .modules import encoder_cbhg, post_cbhg, prenet
 from .rnn_wrappers import DecoderPrenetWrapper, ConcatOutputAndAttentionWrapper
@@ -49,7 +50,7 @@ class Tacotron():
       # Attention
       attention_cell = AttentionWrapper(
         DecoderPrenetWrapper(GRUCell(256), is_training),
-        BahdanauAttention(256, encoder_outputs),
+        LocationSensitiveAttention(256, encoder_outputs),
         alignment_history=True,
         output_attention=False)                                                  # [N, T_in, 256]
 
