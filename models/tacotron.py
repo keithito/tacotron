@@ -39,7 +39,7 @@ class Tacotron():
 
       # Embeddings
       embedding_table = tf.get_variable(
-        'embedding', [len(symbols), 256], dtype=tf.float32,
+        'embedding', [len(symbols), hp.embedding_dim], dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=0.5))
       embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, 256]
 
@@ -127,10 +127,8 @@ class Tacotron():
     '''
     with tf.variable_scope('optimizer') as scope:
       hp = self._hparams
-      if hp.decay_learning_rate:
-        self.learning_rate = _learning_rate_decay(hp.initial_learning_rate, global_step)
-      else:
-        self.learning_rate = tf.convert_to_tensor(hp.initial_learning_rate)
+      self.learning_rate = tf.train.exponential_decay(
+        hp.initial_learning_rate, global_step, hp.learning_rate_decay_halflife, 0.5)
       optimizer = tf.train.AdamOptimizer(self.learning_rate, hp.adam_beta1, hp.adam_beta2)
       gradients, variables = zip(*optimizer.compute_gradients(self.loss))
       self.gradients = gradients
@@ -141,10 +139,3 @@ class Tacotron():
       with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
         self.optimize = optimizer.apply_gradients(zip(clipped_gradients, variables),
           global_step=global_step)
-
-
-def _learning_rate_decay(init_lr, global_step):
-  # Noam scheme from tensor2tensor:
-  warmup_steps = 4000.0
-  step = tf.cast(global_step + 1, dtype=tf.float32)
-  return init_lr * warmup_steps**0.5 * tf.minimum(step * warmup_steps**-1.5, step**-0.5)

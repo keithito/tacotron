@@ -10,28 +10,30 @@ hparams = tf.contrib.training.HParams(
   # Audio:
   num_mels=80,
   num_freq=1025,
-  sample_rate=20000,
+  min_mel_freq=125,
+  max_mel_freq=7600,
+  sample_rate=22000,
   frame_length_ms=50,
   frame_shift_ms=12.5,
-  preemphasis=0.97,
   min_level_db=-100,
   ref_level_db=20,
 
   # Model:
   # TODO: add more configurable hparams
   outputs_per_step=5,
+  embedding_dim=512,
 
   # Training:
   batch_size=32,
   adam_beta1=0.9,
   adam_beta2=0.999,
-  initial_learning_rate=0.002,
-  decay_learning_rate=True,
-  use_cmudict=False,  # Use CMUDict during training to learn pronunciation of ARPAbet phonemes
+  initial_learning_rate=0.0015,
+  learning_rate_decay_halflife=100000,
+  use_cmudict=True,   # Use CMUDict during training to learn pronunciation of ARPAbet phonemes
 
   # Eval:
   max_iters=200,
-  griffin_lim_iters=60,
+  griffin_lim_iters=50,
   power=1.5,              # Power to raise magnitudes to prior to Griffin-Lim
 )
 
