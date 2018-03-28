@@ -25,7 +25,57 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
   futures = []
   index = 1
 
-  trn_files = glob.glob(os.path.join(in_dir, 'data', '*.trn'))
+  # male voice (do not use) A5 A8 A9 A33 A35 B6 B8 B21 B34 C6 C8 D8
+  # too silent (do not use) A36 B33 C14 D32
+
+  trn_files = []
+
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A2_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A4_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A11_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A12_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A13_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A14_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A19_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A22_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A23_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A32_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'A34_*.trn'))
+
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B2_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B4_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B7_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B11_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B12_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B15_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B22_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B31_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'B32_*.trn'))
+
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C2_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C4_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C7_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C12_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C13_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C17_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C18_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C19_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C20_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C21_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C22_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C23_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C31_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'C32_*.trn'))
+
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'D4_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'D6_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'D7_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'D11_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'D12_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'D13_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'D21_*.trn'))
+  trn_files += glob.glob(os.path.join(in_dir, 'data', 'D31_*.trn'))
+
   for trn in trn_files:
     with open(trn) as f:
       f.readline()

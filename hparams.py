@@ -8,11 +8,11 @@ hparams = tf.contrib.training.HParams(
   cleaners='basic_cleaners',
 
   # Audio:
-  num_mels=80,
-  num_freq=1025,
+  num_mels=64,
+  num_freq=513, # n_fft = 1024, n_fft / 2 + 1
   sample_rate=16000,
-  frame_length_ms=50,
-  frame_shift_ms=12.5,
+  frame_length_ms=64,
+  frame_shift_ms=16,
   preemphasis=0.97,
   min_level_db=-100,
   ref_level_db=20,
@@ -30,7 +30,7 @@ hparams = tf.contrib.training.HParams(
   use_cmudict=False,  # Use CMUDict during training to learn pronunciation of ARPAbet phonemes
 
   # Eval:
-  max_iters=300,
+  max_iters=200,
   griffin_lim_iters=60,
   power=1.5,              # Power to raise magnitudes to prior to Griffin-Lim
 )
