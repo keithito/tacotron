@@ -1,11 +1,11 @@
 import tensorflow as tf
-from tensorflow.contrib.rnn import GRUCell, MultiRNNCell, OutputProjectionWrapper, ResidualWrapper
+from tensorflow.contrib.rnn import GRUCell,LSTMCell, MultiRNNCell, OutputProjectionWrapper, ResidualWrapper
 from tensorflow.contrib.seq2seq import BasicDecoder, BahdanauAttention, AttentionWrapper
 from text.symbols import symbols
 from util.infolog import log
 from .helpers import TacoTestHelper, TacoTrainingHelper
 from .modules import encoder_cbhg, post_cbhg, prenet
-from .rnn_wrappers import DecoderPrenetWrapper, ConcatOutputAndAttentionWrapper
+from .rnn_wrappers import DecoderPrenetWrapper, ConcatOutputAndAttentionWrapper, ZoneoutWrapper
 
 
 
@@ -59,8 +59,10 @@ class Tacotron():
       # Decoder (layers specified bottom to top):
       decoder_cell = MultiRNNCell([
           OutputProjectionWrapper(concat_cell, 256),
-          ResidualWrapper(GRUCell(256)),
-          ResidualWrapper(GRUCell(256))
+          #ResidualWrapper(GRUCell(256)),
+          #ResidualWrapper(GRUCell(256))
+          ResidualWrapper(ZoneoutWrapper(LSTMCell(256), 0.1)),
+          ResidualWrapper(ZoneoutWrapper(LSTMCell(256), 0.1))
         ], state_is_tuple=True)                                                  # [N, T_in, 256]
 
       # Project onto r mel spectrograms (predict r outputs at each RNN step):
