@@ -1,8 +1,11 @@
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 import glob
+import librosa
 import numpy as np
 import os
+
+from hparams import hparams
 from util import audio
 
 
@@ -31,6 +34,11 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
 def _process_utterance(out_dir, prompt_id, wav_path, text):
   # Load the audio to a numpy array:
   wav = audio.load_wav(wav_path)
+
+  # Trim leading and trailing silence:
+  margin = int(hparams.sample_rate * 0.1)
+  wav = wav[margin:-margin]
+  wav, _ = librosa.effects.trim(wav, top_db=40, frame_length=1024, hop_length=256)
 
   # Compute the linear-scale spectrogram from the wav:
   spectrogram = audio.spectrogram(wav).astype(np.float32)
