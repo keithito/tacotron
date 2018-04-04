@@ -2,7 +2,8 @@ import tensorflow as tf
 from tensorflow.contrib.rnn import GRUCell
 
 
-def prenet(inputs, is_training, layer_sizes=[256, 128], scope=None):
+def prenet(inputs, is_training, h_params, scope=None):
+  layer_sizes=[h_params.prenet_depth1, h_params.prenet_depth2]
   x = inputs
   drop_rate = 0.5 if is_training else 0.0
   with tf.variable_scope(scope or 'prenet'):
@@ -12,27 +13,30 @@ def prenet(inputs, is_training, layer_sizes=[256, 128], scope=None):
   return x
 
 
-def encoder_cbhg(inputs, input_lengths, is_training):
+def encoder_cbhg(inputs, input_lengths, is_training, h_params):
+  input_channels = inputs.get_shape()[2]
   return cbhg(
     inputs,
     input_lengths,
     is_training,
     scope='encoder_cbhg',
     K=16,
-    projections=[128, 128])
+    projections=[128, input_channels],
+    depth=h_params.encoder_depth)
 
 
-def post_cbhg(inputs, input_dim, is_training):
+def post_cbhg(inputs, input_dim, is_training, h_params):
   return cbhg(
     inputs,
     None,
     is_training,
     scope='post_cbhg',
     K=8,
-    projections=[256, input_dim])
+    projections=[256, input_dim],
+    depth=h_params.postnet_depth)
 
 
-def cbhg(inputs, input_lengths, is_training, scope, K, projections):
+def cbhg(inputs, input_lengths, is_training, scope, K, projections, depth):
   with tf.variable_scope(scope):
     with tf.variable_scope('conv_bank'):
       # Convolution bank: concatenate on the last axis to stack channels from all convolutions
@@ -55,35 +59,38 @@ def cbhg(inputs, input_lengths, is_training, scope, K, projections):
     # Residual connection:
     highway_input = proj2_output + inputs
 
+    half_depth = depth // 2
+    assert half_depth*2 == depth, 'encoder and postnet depths must be even.'
+
     # Handle dimensionality mismatch:
-    if highway_input.shape[2] != 128:
-      highway_input = tf.layers.dense(highway_input, 128)
+    if highway_input.shape[2] != half_depth:
+      highway_input = tf.layers.dense(highway_input, half_depth)
 
     # 4-layer HighwayNet:
     for i in range(4):
-      highway_input = highwaynet(highway_input, 'highway_%d' % (i+1))
+      highway_input = highwaynet(highway_input, 'highway_%d' % (i+1), half_depth)
     rnn_input = highway_input
 
     # Bidirectional RNN
     outputs, states = tf.nn.bidirectional_dynamic_rnn(
-      GRUCell(128),
-      GRUCell(128),
+      GRUCell(half_depth),
+      GRUCell(half_depth),
       rnn_input,
       sequence_length=input_lengths,
       dtype=tf.float32)
     return tf.concat(outputs, axis=2)  # Concat forward and backward
 
 
-def highwaynet(inputs, scope):
+def highwaynet(inputs, scope, depth):
   with tf.variable_scope(scope):
     H = tf.layers.dense(
       inputs,
-      units=128,
+      units=depth,
       activation=tf.nn.relu,
       name='H')
     T = tf.layers.dense(
       inputs,
-      units=128,
+      units=depth,
       activation=tf.nn.sigmoid,
       name='T',
       bias_initializer=tf.constant_initializer(-1.0))

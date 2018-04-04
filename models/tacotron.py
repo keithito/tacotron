@@ -38,30 +38,31 @@ class Tacotron():
 
       # Embeddings
       embedding_table = tf.get_variable(
-        'embedding', [len(symbols), 256], dtype=tf.float32,
+        'embedding', [len(symbols), hp.embed_depth], dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=0.5))
-      embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, 256]
+      embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, embed_depth=256]
 
       # Encoder
-      prenet_outputs = prenet(embedded_inputs, is_training)                       # [N, T_in, 128]
-      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training)  # [N, T_in, 256]
+      prenet_outputs = prenet(embedded_inputs, is_training, hp)                   # [N, T_in, prenet_depth2=128]
+      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training,  # [N, T_in, encoder_depth=256]
+                                     hp)
 
       # Attention
       attention_cell = AttentionWrapper(
-        DecoderPrenetWrapper(GRUCell(256), is_training),
-        BahdanauAttention(256, encoder_outputs),
+        DecoderPrenetWrapper(GRUCell(hp.attention_depth), is_training, hp),
+        BahdanauAttention(hp.attention_depth, encoder_outputs),
         alignment_history=True,
-        output_attention=False)                                                  # [N, T_in, 256]
+        output_attention=False)                                                  # [N, T_in, attention_depth=256]
 
-      # Concatenate attention context vector and RNN cell output into a 512D vector.
-      concat_cell = ConcatOutputAndAttentionWrapper(attention_cell)              # [N, T_in, 512]
+      # Concatenate attention context vector and RNN cell output into a 2*attention_depth=512D vector.
+      concat_cell = ConcatOutputAndAttentionWrapper(attention_cell)              # [N, T_in, 2*attention_depth=512]
 
       # Decoder (layers specified bottom to top):
       decoder_cell = MultiRNNCell([
-          OutputProjectionWrapper(concat_cell, 256),
-          ResidualWrapper(GRUCell(256)),
-          ResidualWrapper(GRUCell(256))
-        ], state_is_tuple=True)                                                  # [N, T_in, 256]
+          OutputProjectionWrapper(concat_cell, hp.decoder_depth),
+          ResidualWrapper(GRUCell(hp.decoder_depth)),
+          ResidualWrapper(GRUCell(hp.decoder_depth))
+        ], state_is_tuple=True)                                                  # [N, T_in, decoder_depth=256]
 
       # Project onto r mel spectrograms (predict r outputs at each RNN step):
       output_cell = OutputProjectionWrapper(decoder_cell, hp.num_mels * hp.outputs_per_step)
@@ -80,7 +81,7 @@ class Tacotron():
       mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels]) # [N, T_out, M]
 
       # Add post-processing CBHG:
-      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training)           # [N, T_out, 256]
+      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training, hp)       # [N, T_out, prenet_depth2=128]
       linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)               # [N, T_out, F]
 
       # Grab alignments from the final decoder state:
