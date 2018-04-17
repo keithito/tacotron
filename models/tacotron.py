@@ -43,14 +43,13 @@ class Tacotron():
       embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)          # [N, T_in, embed_depth=256]
 
       # Encoder
-      prenet_layer_sizes = [hp.prenet_depth1, hp.prenet_depth2]
-      prenet_outputs = prenet(embedded_inputs, is_training, prenet_layer_sizes)  # [N, T_in, prenet_depth2=128]
+      prenet_outputs = prenet(embedded_inputs, is_training, hp.prenet_depths)    # [N, T_in, prenet_depths[-1]=128]
       encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training, # [N, T_in, encoder_depth=256]
                                      hp.encoder_depth)
 
       # Attention
       attention_cell = AttentionWrapper(
-        DecoderPrenetWrapper(GRUCell(hp.attention_depth), is_training, prenet_layer_sizes),
+        DecoderPrenetWrapper(GRUCell(hp.attention_depth), is_training, hp.prenet_depths),
         BahdanauAttention(hp.attention_depth, encoder_outputs),
         alignment_history=True,
         output_attention=False)                                                  # [N, T_in, attention_depth=256]
@@ -82,7 +81,7 @@ class Tacotron():
       mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels])   # [N, T_out, M]
 
       # Add post-processing CBHG:
-      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training,            # [N, T_out, prenet_depth2=128]
+      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training,            # [N, T_out, postnet_depth=256]
                                hp.postnet_depth)
       linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)                # [N, T_out, F]
 

@@ -20,8 +20,7 @@ hparams = tf.contrib.training.HParams(
   # Model:
   outputs_per_step=5,
   embed_depth=256,
-  prenet_depth1=256,
-  prenet_depth2=128,
+  prenet_depths=[256, 128],
   encoder_depth=256,
   postnet_depth=256,
   attention_depth=256,
