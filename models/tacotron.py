@@ -40,16 +40,16 @@ class Tacotron():
       embedding_table = tf.get_variable(
         'embedding', [len(symbols), hp.embed_depth], dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=0.5))
-      embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, embed_depth=256]
+      embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)          # [N, T_in, embed_depth=256]
 
       # Encoder
-      prenet_outputs = prenet(embedded_inputs, is_training, hp)                   # [N, T_in, prenet_depth2=128]
-      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training,  # [N, T_in, encoder_depth=256]
-                                     hp)
+      prenet_outputs = prenet(embedded_inputs, is_training, hp.prenet_depths)    # [N, T_in, prenet_depths[-1]=128]
+      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training, # [N, T_in, encoder_depth=256]
+                                     hp.encoder_depth)
 
       # Attention
       attention_cell = AttentionWrapper(
-        DecoderPrenetWrapper(GRUCell(hp.attention_depth), is_training, hp),
+        DecoderPrenetWrapper(GRUCell(hp.attention_depth), is_training, hp.prenet_depths),
         BahdanauAttention(hp.attention_depth, encoder_outputs),
         alignment_history=True,
         output_attention=False)                                                  # [N, T_in, attention_depth=256]
@@ -75,14 +75,15 @@ class Tacotron():
 
       (decoder_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
         BasicDecoder(output_cell, helper, decoder_init_state),
-        maximum_iterations=hp.max_iters)                                        # [N, T_out/r, M*r]
+        maximum_iterations=hp.max_iters)                                         # [N, T_out/r, M*r]
 
       # Reshape outputs to be one output per entry
-      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels]) # [N, T_out, M]
+      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels])   # [N, T_out, M]
 
       # Add post-processing CBHG:
-      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training, hp)       # [N, T_out, prenet_depth2=128]
-      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)               # [N, T_out, F]
+      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training,            # [N, T_out, postnet_depth=256]
+                               hp.postnet_depth)
+      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)                # [N, T_out, F]
 
       # Grab alignments from the final decoder state:
       alignments = tf.transpose(final_decoder_state[0].alignment_history.stack(), [1, 2, 0])
