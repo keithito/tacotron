@@ -2,8 +2,7 @@ import tensorflow as tf
 from tensorflow.contrib.rnn import GRUCell
 
 
-def prenet(inputs, is_training, h_params, scope=None):
-  layer_sizes=[h_params.prenet_depth1, h_params.prenet_depth2]
+def prenet(inputs, is_training, layer_sizes, scope=None):
   x = inputs
   drop_rate = 0.5 if is_training else 0.0
   with tf.variable_scope(scope or 'prenet'):
@@ -13,7 +12,7 @@ def prenet(inputs, is_training, h_params, scope=None):
   return x
 
 
-def encoder_cbhg(inputs, input_lengths, is_training, h_params):
+def encoder_cbhg(inputs, input_lengths, is_training, depth):
   input_channels = inputs.get_shape()[2]
   return cbhg(
     inputs,
@@ -22,10 +21,10 @@ def encoder_cbhg(inputs, input_lengths, is_training, h_params):
     scope='encoder_cbhg',
     K=16,
     projections=[128, input_channels],
-    depth=h_params.encoder_depth)
+    depth=depth)
 
 
-def post_cbhg(inputs, input_dim, is_training, h_params):
+def post_cbhg(inputs, input_dim, is_training, depth):
   return cbhg(
     inputs,
     None,
@@ -33,7 +32,7 @@ def post_cbhg(inputs, input_dim, is_training, h_params):
     scope='post_cbhg',
     K=8,
     projections=[256, input_dim],
-    depth=h_params.postnet_depth)
+    depth=depth)
 
 
 def cbhg(inputs, input_lengths, is_training, scope, K, projections, depth):

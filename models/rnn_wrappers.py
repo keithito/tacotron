@@ -6,11 +6,11 @@ from .modules import prenet
 
 class DecoderPrenetWrapper(RNNCell):
   '''Runs RNN inputs through a prenet before sending them to the cell.'''
-  def __init__(self, cell, is_training, h_params):
+  def __init__(self, cell, is_training, layer_sizes):
     super(DecoderPrenetWrapper, self).__init__()
     self._cell = cell
     self._is_training = is_training
-    self._h_params = h_params
+    self._layer_sizes = layer_sizes
 
   @property
   def state_size(self):
@@ -21,8 +21,7 @@ class DecoderPrenetWrapper(RNNCell):
     return self._cell.output_size
 
   def call(self, inputs, state):
-    prenet_out = prenet(inputs, self._is_training, self._h_params,
-                        scope='decoder_prenet')
+    prenet_out = prenet(inputs, self._is_training, self._layer_sizes, scope='decoder_prenet')
     return self._cell(prenet_out, state)
 
   def zero_state(self, batch_size, dtype):
