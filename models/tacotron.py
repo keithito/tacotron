@@ -5,7 +5,7 @@ from text.symbols import symbols
 from util.infolog import log
 from .attention import LocationSensitiveAttention
 from .helpers import TacoTestHelper, TacoTrainingHelper
-from .modules import conv_and_lstm, prenet, postnet
+from .modules import conv_and_lstm, postnet
 from .rnn_wrappers import DecoderPrenetWrapper, ConcatOutputAndAttentionWrapper
 
 
