@@ -18,3 +18,4 @@ def plot_alignment(alignment, path, info=None):
   plt.ylabel('Encoder timestep')
   plt.tight_layout()
   plt.savefig(path, format='png')
+  plt.close()
