@@ -38,32 +38,31 @@ class Tacotron():
 
       # Embeddings
       embedding_table = tf.get_variable(
-        'embedding', [len(symbols), 256], dtype=tf.float32,
+        'embedding', [len(symbols), hp.embed_depth], dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=0.5))
-      embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)           # [N, T_in, 256]
+      embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)          # [N, T_in, embed_depth=256]
 
       # Encoder
-      prenet_outputs = prenet(embedded_inputs, is_training)                       # [N, T_in, 128]
-      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training)  # [N, T_in, 256]
+      prenet_outputs = prenet(embedded_inputs, is_training, hp.prenet_depths)    # [N, T_in, prenet_depths[-1]=128]
+      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training, # [N, T_in, encoder_depth=256]
+                                     hp.encoder_depth)
 
       # Attention
       attention_cell = AttentionWrapper(
-        DecoderPrenetWrapper(GRUCell(256), is_training),
-        BahdanauAttention(256, encoder_outputs),
+        DecoderPrenetWrapper(GRUCell(hp.attention_depth), is_training, hp.prenet_depths),
+        BahdanauAttention(hp.attention_depth, encoder_outputs),
         alignment_history=True,
-        output_attention=False)                                                  # [N, T_in, 256]
+        output_attention=False)                                                  # [N, T_in, attention_depth=256]
 
-      # Concatenate attention context vector and RNN cell output into a 512D vector.
-      concat_cell = ConcatOutputAndAttentionWrapper(attention_cell)              # [N, T_in, 512]
+      # Concatenate attention context vector and RNN cell output into a 2*attention_depth=512D vector.
+      concat_cell = ConcatOutputAndAttentionWrapper(attention_cell)              # [N, T_in, 2*attention_depth=512]
 
       # Decoder (layers specified bottom to top):
       decoder_cell = MultiRNNCell([
-          OutputProjectionWrapper(concat_cell, 256),
-          #ResidualWrapper(GRUCell(256)),
-          #ResidualWrapper(GRUCell(256))
-          ResidualWrapper(ZoneoutWrapper(LSTMCell(256), 0.1)),
-          ResidualWrapper(ZoneoutWrapper(LSTMCell(256), 0.1))
-        ], state_is_tuple=True)                                                  # [N, T_in, 256]
+          OutputProjectionWrapper(concat_cell, hp.decoder_depth),
+          ResidualWrapper(ZoneoutWrapper(LSTMCell(hp.decoder_depth))),
+          ResidualWrapper(ZoneoutWrapper(LSTMCell(hp.decoder_depth)))
+        ], state_is_tuple=True)                                                  # [N, T_in, decoder_depth=256]
 
       # Project onto r mel spectrograms (predict r outputs at each RNN step):
       output_cell = OutputProjectionWrapper(decoder_cell, hp.num_mels * hp.outputs_per_step)
@@ -76,14 +75,15 @@ class Tacotron():
 
       (decoder_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
         BasicDecoder(output_cell, helper, decoder_init_state),
-        maximum_iterations=hp.max_iters)                                        # [N, T_out/r, M*r]
+        maximum_iterations=hp.max_iters)                                         # [N, T_out/r, M*r]
 
       # Reshape outputs to be one output per entry
-      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels]) # [N, T_out, M]
+      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels])   # [N, T_out, M]
 
       # Add post-processing CBHG:
-      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training)           # [N, T_out, 256]
-      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)               # [N, T_out, F]
+      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training,            # [N, T_out, postnet_depth=256]
+                               hp.postnet_depth)
+      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)                # [N, T_out, F]
 
       # Grab alignments from the final decoder state:
       alignments = tf.transpose(final_decoder_state[0].alignment_history.stack(), [1, 2, 0])
