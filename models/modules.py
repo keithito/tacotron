@@ -8,7 +8,7 @@ def prenet(inputs, is_training, layer_sizes, scope=None):
   with tf.variable_scope(scope or 'prenet'):
     for i, size in enumerate(layer_sizes):
       dense = tf.layers.dense(x, units=size, activation=tf.nn.relu, name='dense_%d' % (i+1))
-      x = tf.layers.dropout(dense, rate=drop_rate, name='dropout_%d' % (i+1))
+      x = tf.layers.dropout(dense, rate=drop_rate, training=is_training, name='dropout_%d' % (i+1))
   return x
 
 
