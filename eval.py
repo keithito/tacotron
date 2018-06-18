@@ -43,7 +43,10 @@ def main():
   parser.add_argument('--checkpoint', required=True, help='Path to model checkpoint')
   parser.add_argument('--hparams', default='',
     help='Hyperparameter overrides as a comma-separated list of name=value pairs')
+  parser.add_argument('--force_cpu', default=False, help='Force synthesize with cpu')
   args = parser.parse_args()
+  if args.force_cpu:
+    os.environ['CUDA_VISIBLE_DEVICES'] = ''
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
   hparams.parse(args.hparams)
   run_eval(args)
