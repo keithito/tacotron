@@ -11,10 +11,8 @@ from util import audio
 
 def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
   '''Preprocesses the Amy dataset from a given input path into a given output directory.'''
-  # executor = ProcessPoolExecutor(max_workers=num_workers)
+  executor = ProcessPoolExecutor(max_workers=num_workers)
   futures = []
-  count = 0
-  len_files = 0
   # Read all of the .wav files:
   paths = {}
   for path in glob.glob(os.path.join(in_dir, 'audio', '*.wav')):
@@ -28,20 +26,8 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
       if len(parts) == 4 and parts[0] in paths:
         path = paths[parts[0]]
         text = parts[2]
-        # futures.append(executor.submit(partial(_process_utterance, out_dir, parts[0], path, text)))
-        futures.append(partial(_process_utterance, out_dir, parts[0], path, text))
-        len_files += 1
-  # return [future.result() for future in futures]
-    # return [future() for future in futures]
-  metadata = []
-  for future in tqdm(futures):
-    try:
-      data = future()
-      metadata.append(data)
-    except:
-      count += 1
-      print("failed to process" , count, "/", len_files)
-  return metadata
+        futures.append(executor.submit(partial(_process_utterance, out_dir, parts[0], path, text)))
+  return [future.result() for future in tqdm(futures)]
 
 def _process_utterance(out_dir, prompt_id, wav_path, text):
   # Load the audio to a numpy array:
