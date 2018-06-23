@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.seq2seq import Helper
 from .modules import prenet
-from hparams import hparam
+from hparams import hparams
 
 
 # Adapted from tf.contrib.seq2seq.GreedyEmbeddingHelper
