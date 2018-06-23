@@ -58,7 +58,7 @@ class ConcatOutputAndAttentionWrapper(RNNCell):
 class ZoneoutWrapper(RNNCell):
   """Add Zoneout to a RNN cell."""
 
-  def __init__(self, cell, zoneout_drop_prob, is_training=True):
+  def __init__(self, cell, zoneout_drop_prob=0.1, is_training=True):
     self._cell = cell
     self._zoneout_prob = zoneout_drop_prob
     self._is_training = is_training
