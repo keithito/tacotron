@@ -1,7 +1,6 @@
 import argparse
 from datetime import datetime
 import math
-import numpy as np
 import os
 import subprocess
 import time
