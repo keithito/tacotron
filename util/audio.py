@@ -7,50 +7,60 @@ from scipy import signal
 from hparams import hparams
 
 
-def load_wav(path):
+def load_wav(path, hparams=hparams):
   return librosa.core.load(path, sr=hparams.sample_rate)[0]
 
 
-def save_wav(wav, path):
+def save_wav(wav, path, hparams=hparams):
   wav *= 32767 / max(0.01, np.max(np.abs(wav)))
   librosa.output.write_wav(path, wav.astype(np.int16), hparams.sample_rate)
 
 
-def spectrogram(y):
+def trim_silence(wav, hparams=hparams):
+ return librosa.effects.trim(
+     wav, top_db=hparams.trim_top_db,
+     frame_length=hparams.trim_fft_size,
+     hop_length=hparams.trim_hop_size)[0]
+
+
+def spectrogram(y, hparams=hparams):
   D = _stft(y)
   S = _amp_to_db(np.abs(D)) - hparams.ref_level_db
   return _normalize(S)
 
 
-def inv_spectrogram(spectrogram):
+def inv_spectrogram(spectrogram, hparams=hparams):
   '''Converts spectrogram to waveform using librosa'''
-  S = _db_to_amp(_denormalize(spectrogram) + hparams.ref_level_db)  # Convert back to linear
-  return _griffin_lim(S ** hparams.power)                           # Reconstruct phase
+  S = _db_to_amp(_denormalize(spectrogram) +
+                 hparams.ref_level_db)  # Convert back to linear
+  # Reconstruct phase
+  return _griffin_lim(S ** hparams.power)
 
 
-def inv_spectrogram_tensorflow(spectrogram):
+def inv_spectrogram_tensorflow(spectrogram, hparams=hparams):
   '''Builds computational graph to convert spectrogram to waveform using TensorFlow.'''
-  S = _db_to_amp_tensorflow(_denormalize_tensorflow(spectrogram) + hparams.ref_level_db)
+  S = _db_to_amp_tensorflow(_denormalize_tensorflow(
+      spectrogram) + hparams.ref_level_db)
   return _griffin_lim_tensorflow(tf.pow(S, hparams.power))
 
 
-def melspectrogram(y):
+def melspectrogram(y, hparams=hparams):
   D = _stft(y)
   S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
   return _normalize(S)
 
 
-def find_endpoint(wav, threshold_db=-40, min_silence_sec=0.8):
+def find_endpoint(wav, threshold_db=-40, min_silence_sec=0.8, hparams=hparams):
   window_length = int(hparams.sample_rate * min_silence_sec)
   hop_length = int(window_length / 4)
   threshold = _db_to_amp(threshold_db)
   for x in range(hop_length, len(wav) - window_length, hop_length):
-    if np.max(wav[x:x+window_length]) < threshold:
+    if np.max(wav[x:x + window_length]) < threshold:
       return x + hop_length
   return len(wav)
 
 
-def _griffin_lim(S):
+def _griffin_lim(S, hparams=hparams):
   '''librosa implementation of Griffin-Lim
   Based on https://github.com/librosa/librosa/issues/434
   '''
@@ -63,7 +73,7 @@ def _griffin_lim(S):
   return y
 
 
-def _griffin_lim_tensorflow(S):
+def _griffin_lim_tensorflow(S, hparams=hparams):
   '''TensorFlow implementation of Griffin-Lim
   Based on https://github.com/Kyubyong/tensorflow-exercises/blob/master/Audio_Processing.ipynb
   '''
@@ -99,7 +109,7 @@ def _istft_tensorflow(stfts):
   return tf.contrib.signal.inverse_stft(stfts, win_length, hop_length, n_fft)
 
 
-def _stft_parameters():
+def _stft_parameters(hparams=hparams):
   n_fft = (hparams.num_freq - 1) * 2
   hop_length = int(hparams.frame_shift_ms / 1000 * hparams.sample_rate)
   win_length = int(hparams.frame_length_ms / 1000 * hparams.sample_rate)
@@ -110,31 +120,39 @@ def _stft_parameters():
 
 _mel_basis = None
 
+
 def _linear_to_mel(spectrogram):
   global _mel_basis
   if _mel_basis is None:
     _mel_basis = _build_mel_basis()
   return np.dot(_mel_basis, spectrogram)
 
-def _build_mel_basis():
+
+def _build_mel_basis(hparams=hparams):
   n_fft = (hparams.num_freq - 1) * 2
   return librosa.filters.mel(hparams.sample_rate, n_fft, n_mels=hparams.num_mels,
-    fmin=hparams.min_mel_freq, fmax=hparams.max_mel_freq)
+                             fmin=hparams.min_mel_freq, fmax=hparams.max_mel_freq)
+
 
 def _amp_to_db(x):
   return 20 * np.log10(np.maximum(1e-5, x))
 
+
 def _db_to_amp(x):
   return np.power(10.0, x * 0.05)
+
 
 def _db_to_amp_tensorflow(x):
   return tf.pow(tf.ones(tf.shape(x)) * 10.0, x * 0.05)
 
-def _normalize(S):
+
+def _normalize(S, hparams=hparams):
   return np.clip((S - hparams.min_level_db) / -hparams.min_level_db, 0, 1)
 
-def _denormalize(S):
+
+def _denormalize(S, hparams=hparams):
   return (np.clip(S, 0, 1) * -hparams.min_level_db) + hparams.min_level_db
 
-def _denormalize_tensorflow(S):
+
+def _denormalize_tensorflow(S, hparams=hparams):
   return (tf.clip_by_value(S, 0, 1) * -hparams.min_level_db) + hparams.min_level_db

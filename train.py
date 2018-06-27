@@ -73,7 +73,8 @@ def train(log_dir, args):
   saver = tf.train.Saver(max_to_keep=5, keep_checkpoint_every_n_hours=2)
 
   # Train!
-  with tf.Session() as sess:
+  gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=args.gpu_fraction)
+  with tf.Session(config=tf.ConfigProto(gpu_options=gpu_options)) as sess:
     try:
       summary_writer = tf.summary.FileWriter(log_dir, sess.graph)
       sess.run(tf.global_variables_initializer())
@@ -140,6 +141,8 @@ def main():
   parser.add_argument('--tf_log_level', type=int, default=1, help='Tensorflow C++ log level.')
   parser.add_argument('--git', action='store_true', help='If set, verify that the client is clean.')
   parser.add_argument('--gpu_assignment', default='0', help='Set the gpu the model should run on')
+  parser.add_argument('--gpu_fraction', type=float, default='1.0',
+    help='Set the fraction of gpu memory to allocate. 0 - 1')
   args = parser.parse_args()
   os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_assignment
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = str(args.tf_log_level)
