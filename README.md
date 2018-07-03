@@ -108,6 +108,8 @@ Pull requests are welcome!
    Tunable hyperparameters are found in [hparams.py](hparams.py). You can adjust these at the command
    line using the `--hparams` flag, for example `--hparams="batch_size=16,outputs_per_step=2"`.
    Hyperparameters should generally be set to the same values at both training and eval time.
+   The default hyperparameters are recommended for LJ Speech and other English-language data.
+   See [TRAINING_DATA.md](TRAINING_DATA.md) for other languages.
 
 
 5. **Monitor with Tensorboard** (optional)
@@ -135,7 +137,8 @@ Pull requests are welcome!
 
   * [TCMalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) seems to improve
     training speed and avoids occasional slowdowns seen with the default allocator. You
-    can enable it by installing it and setting `LD_PRELOAD=/usr/lib/libtcmalloc.so`.
+    can enable it by installing it and setting `LD_PRELOAD=/usr/lib/libtcmalloc.so`. With TCMalloc,
+    you can get around 1.1 sec/step on a GTX 1080Ti.
 
   * You can train with [CMUDict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) by downloading the
     dictionary to ~/tacotron/training and then passing the flag `--hparams="use_cmudict=True"` to
@@ -161,6 +164,9 @@ Pull requests are welcome!
     
     To fix this, you can set a larger value of `max_iters` by passing `--hparams="max_iters=300"` to
     train.py (replace "300" with a value based on how long your audio is and the formula above).
+    
+  * Here is the expected loss curve when training on LJ Speech with the default hyperparameters:
+    ![Loss curve](https://user-images.githubusercontent.com/1945356/36077599-c0513e4a-0f21-11e8-8525-07347847720c.png)
 
 
 ## Other Implementations
