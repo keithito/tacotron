@@ -17,6 +17,7 @@ class Synthesizer:
       self.model = create_model(model_name, hparams)
       self.model.initialize(inputs, input_lengths)
       self.wav_output = audio.inv_spectrogram_tensorflow(self.model.linear_outputs[0])
+      self.alignment = self.model.alignments[0]
 
     print('Loading checkpoint: %s' % checkpoint_path)
     self.session = tf.Session()
@@ -32,8 +33,11 @@ class Synthesizer:
       self.model.inputs: [np.asarray(seq, dtype=np.int32)],
       self.model.input_lengths: np.asarray([len(seq)], dtype=np.int32)
     }
-    wav = self.session.run(self.wav_output, feed_dict=feed_dict)
+    wav, alignment = self.session.run(
+      [self.wav_output, self.alignment],
+      feed_dict=feed_dict)
+    
     wav = wav[:audio.find_endpoint(wav)]
     out = io.BytesIO()
     audio.save_wav(wav, out)
-    return out.getvalue()
+    return out.getvalue(), alignment

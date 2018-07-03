@@ -1,9 +1,14 @@
-import argparse
-import falcon
+from flask import Flask, request, send_file
+from flask.views import MethodView
 from hparams import hparams, hparams_debug_string
+import argparse
 import os
 from synthesizer import Synthesizer
+from flask_cors import CORS
+import io
 
+app = Flask(__name__)
+CORS(app)
 
 html_body = '''<html><title>Demo</title>
 <style>
@@ -56,40 +61,44 @@ function synthesize(text) {
 </script></body></html>
 '''
 
-
-class UIResource:
-  def on_get(self, req, res):
-    res.content_type = 'text/html'
-    res.body = html_body
-
-
-class SynthesisResource:
-  def on_get(self, req, res):
-    if not req.params.get('text'):
-      raise falcon.HTTPBadRequest()
-    res.data = synthesizer.synthesize(req.params.get('text'))
-    res.content_type = 'audio/wav'
-
-
 synthesizer = Synthesizer()
-api = falcon.API()
-api.add_route('/synthesize', SynthesisResource())
-api.add_route('/', UIResource())
+
+
+class Mimic2(MethodView):
+    def get(self):
+        text = request.args.get('text')
+        if text:
+            wav, _ = synthesizer.synthesize(text)
+            audio = io.BytesIO(wav)
+            return send_file(audio, mimetype="audio/wav")
+
+
+class UI(MethodView):
+    def get(self):
+        return html_body
+
+
+ui_view = UI.as_view('ui_view')
+app.add_url_rule('/', view_func=ui_view, methods=['GET'])
+
+mimic2_api = Mimic2.as_view('mimic2_api')
+app.add_url_rule('/synthesize', view_func=mimic2_api, methods=['GET'])
 
 
 if __name__ == '__main__':
-  from wsgiref import simple_server
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--checkpoint', required=True, help='Full path to model checkpoint')
-  parser.add_argument('--port', type=int, default=9000)
-  parser.add_argument('--hparams', default='',
-    help='Hyperparameter overrides as a comma-separated list of name=value pairs')
-  args = parser.parse_args()
-  os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-  hparams.parse(args.hparams)
-  print(hparams_debug_string())
-  synthesizer.load(args.checkpoint)
-  print('Serving on port %d' % args.port)
-  simple_server.make_server('0.0.0.0', args.port, api).serve_forever()
-else:
-  synthesizer.load(os.environ['CHECKPOINT'])
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint', required=True,
+                        help='Full path to model checkpoint')
+    parser.add_argument('--port', type=int, default=3000)
+    parser.add_argument('--hparams', default='',
+                        help='Hyperparameter overrides as a comma-separated list of name=value pairs')
+    parser.add_argument(
+        '--gpu_assignment', default='0',
+        help='Set the gpu the model should run on')
+    args = parser.parse_args()
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu_assignment
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+    hparams.parse(args.hparams)
+    print(hparams_debug_string())
+    synthesizer.load(args.checkpoint)
+    app.run(host='0.0.0.0', port=3000)
