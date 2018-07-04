@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 from tensorflow.contrib.seq2seq import Helper
+from .modules import prenet
+from hparams import hparams
 
 
 # Adapted from tf.contrib.seq2seq.GreedyEmbeddingHelper
@@ -24,7 +26,7 @@ class TacoTestHelper(Helper):
     return np.int32
 
   def initialize(self, name=None):
-    return (tf.tile([False], [self._batch_size]), _go_frames(self._batch_size, self._output_dim))
+    return (tf.tile([False], [self._batch_size]), _go_frames(self._batch_size, hparams.prenet_depths[-1]))
 
   def sample(self, time, outputs, state, name=None):
     return tf.tile([0], [self._batch_size])  # Return all 0; we ignore them
@@ -35,6 +37,7 @@ class TacoTestHelper(Helper):
       finished = tf.reduce_all(tf.equal(outputs, self._end_token), axis=1)
       # Feed last output frame as next input. outputs is [N, output_dim * r]
       next_inputs = outputs[:, -self._output_dim:]
+      next_inputs = prenet(next_inputs, False, hparams.prenet_depths, "decoder_prenet")
       return (finished, next_inputs, state)
 
 
@@ -74,6 +77,7 @@ class TacoTrainingHelper(Helper):
     with tf.name_scope(name or 'TacoTrainingHelper'):
       finished = (time + 1 >= self._lengths)
       next_inputs = self._targets[:, time, :]
+      next_inputs = prenet(next_inputs, True, [256, 128], "decoder_prenet")
       return (finished, next_inputs, state)
 
 
