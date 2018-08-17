@@ -15,10 +15,10 @@ An implementation of Tacotron speech synthesis in TensorFlow.
 
 ## Background
 
-Earlier this year, Google published a paper, [Tacotron: A Fully End-to-End Text-To-Speech Synthesis Model](https://arxiv.org/pdf/1703.10135.pdf),
+In April 2017, Google published a paper, [Tacotron: Towards End-to-End Speech Synthesis](https://arxiv.org/pdf/1703.10135.pdf),
 where they present a neural text-to-speech model that learns to synthesize speech directly from
 (text, audio) pairs. However, they didn't release their source code or training data. This is an
-attempt to provide an open-source implementation of the model described in their paper.
+independent attempt to provide an open-source implementation of the model described in their paper.
 
 The quality isn't as good as Google's demo yet, but hopefully it will get there someday :-).
 Pull requests are welcome!
@@ -32,7 +32,7 @@ Pull requests are welcome!
 1. Install Python 3.
 
 2. Install the latest version of [TensorFlow](https://www.tensorflow.org/install/) for your platform. For better
-   performance, install with GPU support if it's available. This code works with TensorFlow 1.3 or 1.4.
+   performance, install with GPU support if it's available. This code works with TensorFlow 1.3 and later.
 
 3. Install requirements:
    ```
@@ -75,7 +75,7 @@ Pull requests are welcome!
    After unpacking, your tree should look like this for LJ Speech:
    ```
    tacotron
-     |- LJSpeech-1.0
+     |- LJSpeech-1.1
          |- metadata.csv
          |- wavs
    ```
@@ -108,6 +108,8 @@ Pull requests are welcome!
    Tunable hyperparameters are found in [hparams.py](hparams.py). You can adjust these at the command
    line using the `--hparams` flag, for example `--hparams="batch_size=16,outputs_per_step=2"`.
    Hyperparameters should generally be set to the same values at both training and eval time.
+   The default hyperparameters are recommended for LJ Speech and other English-language data.
+   See [TRAINING_DATA.md](TRAINING_DATA.md) for other languages.
 
 
 5. **Monitor with Tensorboard** (optional)
@@ -135,7 +137,8 @@ Pull requests are welcome!
 
   * [TCMalloc](http://goog-perftools.sourceforge.net/doc/tcmalloc.html) seems to improve
     training speed and avoids occasional slowdowns seen with the default allocator. You
-    can enable it by installing it and setting `LD_PRELOAD=/usr/lib/libtcmalloc.so`.
+    can enable it by installing it and setting `LD_PRELOAD=/usr/lib/libtcmalloc.so`. With TCMalloc,
+    you can get around 1.1 sec/step on a GTX 1080Ti.
 
   * You can train with [CMUDict](http://www.speech.cs.cmu.edu/cgi-bin/cmudict) by downloading the
     dictionary to ~/tacotron/training and then passing the flag `--hparams="use_cmudict=True"` to
@@ -161,6 +164,9 @@ Pull requests are welcome!
     
     To fix this, you can set a larger value of `max_iters` by passing `--hparams="max_iters=300"` to
     train.py (replace "300" with a value based on how long your audio is and the formula above).
+    
+  * Here is the expected loss curve when training on LJ Speech with the default hyperparameters:
+    ![Loss curve](https://user-images.githubusercontent.com/1945356/36077599-c0513e4a-0f21-11e8-8525-07347847720c.png)
 
 
 ## Other Implementations

@@ -41,7 +41,7 @@ q('#button').addEventListener('click', function(e) {
 function synthesize(text) {
   fetch('/synthesize?text=' + encodeURIComponent(text), {cache: 'no-cache'})
     .then(function(res) {
-      if (!res.ok) throw Error(response.statusText)
+      if (!res.ok) throw Error(res.statusText)
       return res.blob()
     }).then(function(blob) {
       q('#message').textContent = ''
