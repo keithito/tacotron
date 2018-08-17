@@ -1,12 +1,12 @@
 import tensorflow as tf
 from tensorflow.contrib.rnn import GRUCell, MultiRNNCell, OutputProjectionWrapper, ResidualWrapper
-from tensorflow.contrib.seq2seq import BasicDecoder, BahdanauAttention, AttentionWrapper
+from tensorflow.contrib.seq2seq import BasicDecoder
 from text.symbols import symbols
 from util.infolog import log
 from .helpers import TacoTestHelper, TacoTrainingHelper
 from .modules import encoder_cbhg, post_cbhg, prenet
-from .rnn_wrappers import DecoderPrenetWrapper, ConcatOutputAndAttentionWrapper
-
+from .rnn_wrappers import TacotronDecoderWrapper
+from .attention import LocationSensitiveAttention
 
 
 class Tacotron():
@@ -40,53 +40,44 @@ class Tacotron():
       embedding_table = tf.get_variable(
         'embedding', [len(symbols), hp.embed_depth], dtype=tf.float32,
         initializer=tf.truncated_normal_initializer(stddev=0.5))
-      embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)          # [N, T_in, embed_depth=256]
+      embedded_inputs = tf.nn.embedding_lookup(embedding_table, inputs)                            # [N, T_in, embed_depth=256]
 
       # Encoder
-      prenet_outputs = prenet(embedded_inputs, is_training, hp.prenet_depths)    # [N, T_in, prenet_depths[-1]=128]
-      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training, # [N, T_in, encoder_depth=256]
-                                     hp.encoder_depth)
+      prenet_outputs = prenet(embedded_inputs, is_training, hp.prenet_depths)                      # [N, T_in, prenet_depths[-1]=128]
+      encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training, hp.encoder_depth) # [N, T_in, encoder_depth=256]
 
       # Attention
-      attention_cell = AttentionWrapper(
-        DecoderPrenetWrapper(GRUCell(hp.attention_depth), is_training, hp.prenet_depths),
-        BahdanauAttention(hp.attention_depth, encoder_outputs),
-        alignment_history=True,
-        output_attention=False)                                                  # [N, T_in, attention_depth=256]
-
-      # Concatenate attention context vector and RNN cell output into a 2*attention_depth=512D vector.
-      concat_cell = ConcatOutputAndAttentionWrapper(attention_cell)              # [N, T_in, 2*attention_depth=512]
+      attention_mechanism = LocationSensitiveAttention(hp.attention_depth, encoder_outputs)        # [N, T_in, attention_depth=256]
 
       # Decoder (layers specified bottom to top):
-      decoder_cell = MultiRNNCell([
-          OutputProjectionWrapper(concat_cell, hp.decoder_depth),
+      multi_rnn_cell = MultiRNNCell([
           ResidualWrapper(GRUCell(hp.decoder_depth)),
           ResidualWrapper(GRUCell(hp.decoder_depth))
-        ], state_is_tuple=True)                                                  # [N, T_in, decoder_depth=256]
+        ], state_is_tuple=True)                                                         # [N, T_in, decoder_depth=256]
 
       # Project onto r mel spectrograms (predict r outputs at each RNN step):
-      output_cell = OutputProjectionWrapper(decoder_cell, hp.num_mels * hp.outputs_per_step)
-      decoder_init_state = output_cell.zero_state(batch_size=batch_size, dtype=tf.float32)
+      decoder_cell = TacotronDecoderWrapper(is_training, attention_mechanism, multi_rnn_cell)
 
       if is_training:
         helper = TacoTrainingHelper(inputs, mel_targets, hp.num_mels, hp.outputs_per_step)
       else:
         helper = TacoTestHelper(batch_size, hp.num_mels, hp.outputs_per_step)
 
+      decoder_init_state = decoder_cell.zero_state(batch_size=batch_size, dtype=tf.float32)
+
       (decoder_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
-        BasicDecoder(output_cell, helper, decoder_init_state),
-        maximum_iterations=hp.max_iters)                                         # [N, T_out/r, M*r]
+        BasicDecoder(OutputProjectionWrapper(decoder_cell, hp.num_mels * hp.outputs_per_step),
+        helper, decoder_init_state), maximum_iterations=hp.max_iters)                   # [N, T_out/r, M*r]
 
       # Reshape outputs to be one output per entry
-      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels])   # [N, T_out, M]
+      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels])          # [N, T_out, M]
 
       # Add post-processing CBHG:
-      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training,            # [N, T_out, postnet_depth=256]
-                               hp.postnet_depth)
-      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)                # [N, T_out, F]
+      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training, hp.postnet_depth) # [N, T_out, postnet_depth=256]
+      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)                       # [N, T_out, F]
 
       # Grab alignments from the final decoder state:
-      alignments = tf.transpose(final_decoder_state[0].alignment_history.stack(), [1, 2, 0])
+      alignments = tf.transpose(final_decoder_state.alignment_history.stack(), [1, 2, 0])
 
       self.inputs = inputs
       self.input_lengths = input_lengths
@@ -99,9 +90,9 @@ class Tacotron():
       log('  embedding:               %d' % embedded_inputs.shape[-1])
       log('  prenet out:              %d' % prenet_outputs.shape[-1])
       log('  encoder out:             %d' % encoder_outputs.shape[-1])
-      log('  attention out:           %d' % attention_cell.output_size)
-      log('  concat attn & out:       %d' % concat_cell.output_size)
-      log('  decoder cell out:        %d' % decoder_cell.output_size)
+      # log('  attention out:           %d' % attention_cell.output_size)
+      # log('  concat attn & out:       %d' % concat_cell.output_size)
+      # log('  decoder cell out:        %d' % decoder_cell.output_size)
       log('  decoder out (%d frames):  %d' % (hp.outputs_per_step, decoder_outputs.shape[-1]))
       log('  decoder out (1 frame):   %d' % mel_outputs.shape[-1])
       log('  postnet out:             %d' % post_outputs.shape[-1])
@@ -114,8 +105,8 @@ class Tacotron():
       hp = self._hparams
       self.mel_loss = tf.reduce_mean(tf.abs(self.mel_targets - self.mel_outputs))
       l1 = tf.abs(self.linear_targets - self.linear_outputs)
-      # Prioritize loss for frequencies under 3000 Hz.
-      n_priority_freq = int(3000 / (hp.sample_rate * 0.5) * hp.num_freq)
+      # Prioritize loss for frequencies under 4000 Hz.
+      n_priority_freq = int(4000 / (hp.sample_rate * 0.5) * hp.num_freq)
       self.linear_loss = 0.5 * tf.reduce_mean(l1) + 0.5 * tf.reduce_mean(l1[:,:,0:n_priority_freq])
       self.loss = self.mel_loss + self.linear_loss
 
