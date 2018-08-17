@@ -4,6 +4,7 @@ import numpy as np
 import os
 import glob
 from util import audio
+from hparams import hparams as hp
 
 
 def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
@@ -35,7 +36,7 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
       task = partial(_process_utterance, out_dir, index, wav_file, pinyin)
       futures.append(executor.submit(task))
       index += 1
-  return [future.result() for future in tqdm(futures)]
+  return [future.result() for future in tqdm(futures) if future.result() is not None]
 
 
 def _process_utterance(out_dir, index, wav_path, pinyin):
@@ -60,6 +61,8 @@ def _process_utterance(out_dir, index, wav_path, pinyin):
   # Compute the linear-scale spectrogram from the wav:
   spectrogram = audio.spectrogram(wav).astype(np.float32)
   n_frames = spectrogram.shape[1]
+  if n_frames > hp.max_frame_num:
+    return None
 
   # Compute a mel-scale spectrogram from the wav:
   mel_spectrogram = audio.melspectrogram(wav).astype(np.float32)

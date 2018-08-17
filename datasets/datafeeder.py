@@ -88,8 +88,6 @@ class DataFeeder(threading.Thread):
     # Bucket examples based on similar output sequence length for efficiency:
     examples.sort(key=lambda x: x[-1])
     batches = [examples[i:i+n] for i in range(0, len(examples), n)]
-    # shape = (batch_size, _batches_per_group, [input, mel, linear, len])
-    # batches as one batch group
     random.shuffle(batches)
 
     log('Generated %d batches of size %d in %.03f sec' % (len(batches), n, time.time() - start))
