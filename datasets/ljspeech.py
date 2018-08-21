@@ -18,7 +18,7 @@ def build_from_path(in_dir, out_dir, num_workers=1, tqdm=lambda x: x):
       A list of tuples describing the training examples. This should be written to train.txt
   '''
 
-  # We use ProcessPoolExecutor to parallize across processes. This is just an optimization and you
+  # We use ProcessPoolExecutor to parallelize across processes. This is just an optimization and you
   # can omit it and just call _process_utterance on each input if you want.
   executor = ProcessPoolExecutor(max_workers=num_workers)
   futures = []
