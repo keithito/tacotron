@@ -5,8 +5,9 @@ from text.symbols import symbols
 from util.infolog import log
 from .helpers import TacoTestHelper, TacoTrainingHelper
 from .modules import encoder_cbhg, post_cbhg, prenet
-from .rnn_wrappers import TacotronDecoderWrapper
+from .rnn_wrappers import FrameProjection, StopProjection, TacotronDecoderWrapper
 from .attention import LocationSensitiveAttention
+from .custom_decoder import CustomDecoder
 
 
 class Tacotron():
@@ -14,7 +15,7 @@ class Tacotron():
     self._hparams = hparams
 
 
-  def initialize(self, inputs, input_lengths, mel_targets=None, linear_targets=None):
+  def initialize(self, inputs, input_lengths, mel_targets=None, linear_targets=None, stop_token_targets=None):
     '''Initializes the model for inference.
 
     Sets "mel_outputs", "linear_outputs", and "alignments" fields.
@@ -46,17 +47,24 @@ class Tacotron():
       prenet_outputs = prenet(embedded_inputs, is_training, hp.prenet_depths)                      # [N, T_in, prenet_depths[-1]=128]
       encoder_outputs = encoder_cbhg(prenet_outputs, input_lengths, is_training, hp.encoder_depth) # [N, T_in, encoder_depth=256]
 
-      # Attention
+      # Location sensitive attention
       attention_mechanism = LocationSensitiveAttention(hp.attention_depth, encoder_outputs)        # [N, T_in, attention_depth=256]
 
       # Decoder (layers specified bottom to top):
       multi_rnn_cell = MultiRNNCell([
           ResidualWrapper(GRUCell(hp.decoder_depth)),
           ResidualWrapper(GRUCell(hp.decoder_depth))
-        ], state_is_tuple=True)                                                         # [N, T_in, decoder_depth=256]
+        ], state_is_tuple=True)                                                                    # [N, T_in, decoder_depth=256]
+
+      # Frames Projection layer
+      frame_projection = FrameProjection(hp.num_mels * hp.outputs_per_step)                        # [N, T_out/r, M*r]
+
+      # <stop_token> projection layer
+      stop_projection = StopProjection(is_training, shape=hp.outputs_per_step)                     # [N, T_out/r, r]
 
       # Project onto r mel spectrograms (predict r outputs at each RNN step):
-      decoder_cell = TacotronDecoderWrapper(is_training, attention_mechanism, multi_rnn_cell)
+      decoder_cell = TacotronDecoderWrapper(is_training, attention_mechanism, multi_rnn_cell,
+                                            frame_projection, stop_projection)
 
       if is_training:
         helper = TacoTrainingHelper(inputs, mel_targets, hp.num_mels, hp.outputs_per_step)
@@ -65,16 +73,17 @@ class Tacotron():
 
       decoder_init_state = decoder_cell.zero_state(batch_size=batch_size, dtype=tf.float32)
 
-      (decoder_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
-        BasicDecoder(OutputProjectionWrapper(decoder_cell, hp.num_mels * hp.outputs_per_step),
-        helper, decoder_init_state), maximum_iterations=hp.max_iters)                   # [N, T_out/r, M*r]
+      (decoder_outputs, stop_token_outputs, _), final_decoder_state, _ = tf.contrib.seq2seq.dynamic_decode(
+         CustomDecoder(decoder_cell, helper, decoder_init_state),
+         maximum_iterations=hp.max_iters)                                                          # [N, T_out/r, M*r]
 
       # Reshape outputs to be one output per entry
-      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels])          # [N, T_out, M]
+      mel_outputs = tf.reshape(decoder_outputs, [batch_size, -1, hp.num_mels])                     # [N, T_out, M]
+      stop_token_outputs = tf.reshape(stop_token_outputs, [batch_size, -1])                        # [N, T_out, M]
 
       # Add post-processing CBHG:
-      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training, hp.postnet_depth) # [N, T_out, postnet_depth=256]
-      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)                       # [N, T_out, F]
+      post_outputs = post_cbhg(mel_outputs, hp.num_mels, is_training, hp.postnet_depth)            # [N, T_out, postnet_depth=256]
+      linear_outputs = tf.layers.dense(post_outputs, hp.num_freq)                                  # [N, T_out, F]
 
       # Grab alignments from the final decoder state:
       alignments = tf.transpose(final_decoder_state.alignment_history.stack(), [1, 2, 0])
@@ -83,20 +92,20 @@ class Tacotron():
       self.input_lengths = input_lengths
       self.mel_outputs = mel_outputs
       self.linear_outputs = linear_outputs
+      self.stop_token_outputs = stop_token_outputs
       self.alignments = alignments
       self.mel_targets = mel_targets
       self.linear_targets = linear_targets
+      self.stop_token_targets = stop_token_targets
       log('Initialized Tacotron model. Dimensions: ')
-      log('  embedding:               %d' % embedded_inputs.shape[-1])
-      log('  prenet out:              %d' % prenet_outputs.shape[-1])
-      log('  encoder out:             %d' % encoder_outputs.shape[-1])
-      # log('  attention out:           %d' % attention_cell.output_size)
-      # log('  concat attn & out:       %d' % concat_cell.output_size)
-      # log('  decoder cell out:        %d' % decoder_cell.output_size)
-      log('  decoder out (%d frames):  %d' % (hp.outputs_per_step, decoder_outputs.shape[-1]))
-      log('  decoder out (1 frame):   %d' % mel_outputs.shape[-1])
-      log('  postnet out:             %d' % post_outputs.shape[-1])
-      log('  linear out:              %d' % linear_outputs.shape[-1])
+      log('  embedding:               {}'.format(embedded_inputs.shape))
+      log('  prenet out:              {}'.format(prenet_outputs.shape))
+      log('  encoder out:             {}'.format(encoder_outputs.shape))
+      log('  decoder out (r frames):  {}'.format(decoder_outputs.shape))
+      log('  decoder out (1 frame):   {}'.format(mel_outputs.shape))
+      log('  postnet out:             {}'.format(post_outputs.shape))
+      log('  linear out:              {}'.format(linear_outputs.shape))
+      log('  stop token:              {}'.format(stop_token_outputs.shape))
 
 
   def add_loss(self):
@@ -104,11 +113,22 @@ class Tacotron():
     with tf.variable_scope('loss') as scope:
       hp = self._hparams
       self.mel_loss = tf.reduce_mean(tf.abs(self.mel_targets - self.mel_outputs))
+      self.stop_token_loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+                                            labels=self.stop_token_targets,
+                                            logits=self.stop_token_outputs))
+
       l1 = tf.abs(self.linear_targets - self.linear_outputs)
       # Prioritize loss for frequencies under 4000 Hz.
       n_priority_freq = int(4000 / (hp.sample_rate * 0.5) * hp.num_freq)
       self.linear_loss = 0.5 * tf.reduce_mean(l1) + 0.5 * tf.reduce_mean(l1[:,:,0:n_priority_freq])
-      self.loss = self.mel_loss + self.linear_loss
+
+      # Compute the regularization weights
+      # reg_weight = 1e-6
+      # all_vars = tf.trainable_variables()
+      # self.regularization_loss = tf.add_n([tf.nn.l2_loss(v) for v in all_vars
+      #   if not('bias' in v.name or 'Bias' in v.name)]) * reg_weight
+
+      self.loss = self.mel_loss + self.linear_loss + self.stop_token_loss# + self.regularization_loss
 
 
   def add_optimizer(self, global_step):
