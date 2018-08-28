@@ -10,6 +10,58 @@ from tensorflow.python.util import nest
 from hparams import hparams as hp
 
 
+class FrameProjection:
+  """Projection layer to r * num_mels dimensions or num_mels dimensions
+  """
+  def __init__(self, shape=hp.num_mels, activation=None, scope=None):
+    """
+    Args:
+      shape: integer, dimensionality of output space (r*n_mels for decoder or n_mels for postnet)
+      activation: callable, activation function
+      scope: FrameProjection scope.
+    """
+    super(FrameProjection, self).__init__()
+
+    self.shape = shape
+    self.activation = activation
+    self.scope = 'linear_projection' if scope is None else scope
+    self.dense = tf.layers.Dense(units=shape, activation=activation, name='projection_{}'.format(self.scope))
+
+  def __call__(self, inputs):
+    with tf.variable_scope(self.scope):
+      # If activation==None, this returns a simple Linear projection
+      # else the projection will be passed through an activation function
+      # output = tf.layers.dense(inputs, units=self.shape, activation=self.activation,
+      # name='projection_{}'.format(self.scope))
+      return self.dense(inputs)
+
+
+class StopProjection:
+  """Projection to a scalar and through a sigmoid activation
+  """
+  def __init__(self, is_training, shape=1, activation=tf.nn.sigmoid, scope=None):
+    """
+    Args:
+      is_training: Boolean, to control the use of sigmoid function as it is useless to use it
+        during training since it is integrate inside the sigmoid_crossentropy loss
+      shape: integer, dimensionality of output space. Defaults to 1 (scalar)
+      activation: callable, activation function. only used during inference
+      scope: StopProjection scope.
+    """
+    super(StopProjection, self).__init__()
+
+    self.is_training = is_training
+    self.shape = shape
+    self.activation = activation
+    self.scope = 'stop_token_projection' if scope is None else scope
+
+  def __call__(self, inputs):
+    with tf.variable_scope(self.scope):
+      output = tf.layers.dense(inputs, units=self.shape, activation=None, name='projection_{}'.format(self.scope))
+      #During training, don't use activation as it is integrated inside the sigmoid_cross_entropy loss function
+      return output if self.is_training else self.activation(output)
+
+
 class TacotronDecoderCellState(
   collections.namedtuple("TacotronDecoderCellState",
    ("cell_state", "attention", "time", "alignments",
@@ -50,7 +102,7 @@ class TacotronDecoderWrapper(RNNCell):
   tensorflow's attention wrapper call if it was using cumulative alignments instead of previous alignments only.
   """
 
-  def __init__(self, is_training, attention_mechanism, rnn_cell, frame_projection = None, stop_projection = None):
+  def __init__(self, is_training, attention_mechanism, rnn_cell, frame_projection, stop_projection):
     """Initialize decoder parameters
 
     Args:
@@ -70,7 +122,6 @@ class TacotronDecoderWrapper(RNNCell):
     self._cell = rnn_cell
     self._frame_projection = frame_projection
     self._stop_projection = stop_projection
-
     self._attention_layer_size = self._attention_mechanism.values.get_shape()[-1].value
 
   def _batch_size_checks(self, batch_size, error_message):
@@ -78,10 +129,11 @@ class TacotronDecoderWrapper(RNNCell):
       self._attention_mechanism.batch_size,
       message=error_message)]
 
+  @property
   def output_size(self):
-    # return self._frame_projection.shape
-    return self._cell.output_size + self._cell.state_size.attention
+    return self._frame_projection.shape
 
+  # @property
   def state_size(self):
     """The `state_size` property of `TacotronDecoderWrapper`.
 
@@ -153,12 +205,11 @@ class TacotronDecoderWrapper(RNNCell):
       attention_layer=None)
 
     #Concat RNN outputs and context vector to form projections inputs
-    # projections_input = tf.concat([rnn_output, context_vector], axis=-1)
-    cell_outputs = tf.concat([rnn_output, context_vector], axis=-1)
+    projections_input = tf.concat([rnn_output, context_vector], axis=-1)
 
     #Compute predicted frames and predicted <stop_token>
-    # cell_outputs = self._frame_projection(projections_input)
-    # stop_tokens = self._stop_projection(projections_input)
+    cell_outputs = self._frame_projection(projections_input)
+    stop_tokens = self._stop_projection(projections_input)
 
     #Save alignment history
     alignment_history = previous_alignment_history.write(state.time, alignments)
@@ -171,5 +222,4 @@ class TacotronDecoderWrapper(RNNCell):
       alignments=cumulated_alignments,
       alignment_history=alignment_history)
 
-    # return (cell_outputs, stop_tokens), next_state
-    return cell_outputs, next_state
+    return (cell_outputs, stop_tokens), next_state

@@ -31,6 +31,7 @@ def add_stats(model):
     tf.summary.histogram('mel_targets', model.mel_targets)
     tf.summary.scalar('loss_mel', model.mel_loss)
     tf.summary.scalar('loss_linear', model.linear_loss)
+    tf.summary.scalar('stop_token_loss', model.stop_token_loss)
     tf.summary.scalar('learning_rate', model.learning_rate)
     tf.summary.scalar('loss', model.loss)
     gradient_norms = [tf.norm(grad) for grad in model.gradients]
@@ -61,7 +62,7 @@ def train(log_dir, args):
   global_step = tf.Variable(0, name='global_step', trainable=False)
   with tf.variable_scope('model') as scope:
     model = create_model(args.model, hparams)
-    model.initialize(feeder.inputs, feeder.input_lengths, feeder.mel_targets, feeder.linear_targets)
+    model.initialize(feeder.inputs, feeder.input_lengths, feeder.mel_targets, feeder.linear_targets, feeder.stop_token_targets)
     model.add_loss()
     model.add_optimizer(global_step)
     stats = add_stats(model)

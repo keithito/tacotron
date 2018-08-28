@@ -9,11 +9,15 @@ class TacoTestHelper(Helper):
     with tf.name_scope('TacoTestHelper'):
       self._batch_size = batch_size
       self._output_dim = output_dim
-      self._end_token = tf.tile([0.0], [output_dim * r])
+      self._reduction_factor = r
 
   @property
   def batch_size(self):
     return self._batch_size
+
+  @property
+  def token_output_size(self):
+    return self._reduction_factor
 
   @property
   def sample_ids_shape(self):
@@ -29,10 +33,16 @@ class TacoTestHelper(Helper):
   def sample(self, time, outputs, state, name=None):
     return tf.tile([0], [self._batch_size])  # Return all 0; we ignore them
 
-  def next_inputs(self, time, outputs, state, sample_ids, name=None):
+  def next_inputs(self, time, outputs, state, sample_ids, stop_token_preds, name=None):
     '''Stop on EOS. Otherwise, pass the last output as the next input and pass through state.'''
     with tf.name_scope('TacoTestHelper'):
-      finished = tf.reduce_all(tf.equal(outputs, self._end_token), axis=1)
+      # A sequence is finished when the stop token probability is > 0.5
+      # With enough training steps, the model should be able to predict when to stop correctly
+      # and the use of stop_at_any = True would be recommended. If however the model didn't
+      # learn to stop correctly yet, (stops too soon) one could choose to use the safer option
+      # to get a correct synthesis
+      finished = tf.reduce_any(tf.cast(tf.round(stop_token_preds), tf.bool))
+
       # Feed last output frame as next input. outputs is [N, output_dim * r]
       next_inputs = outputs[:, -self._output_dim:]
       return (finished, next_inputs, state)
@@ -44,6 +54,7 @@ class TacoTrainingHelper(Helper):
     with tf.name_scope('TacoTrainingHelper'):
       self._batch_size = tf.shape(inputs)[0]
       self._output_dim = output_dim
+      self._reduction_factor = r
 
       # Feed every r-th target frame as input
       self._targets = targets[:, r-1::r, :]
@@ -57,6 +68,10 @@ class TacoTrainingHelper(Helper):
     return self._batch_size
 
   @property
+  def token_output_size(self):
+    return self._reduction_factor
+
+  @property
   def sample_ids_shape(self):
     return tf.TensorShape([])
 
@@ -70,10 +85,10 @@ class TacoTrainingHelper(Helper):
   def sample(self, time, outputs, state, name=None):
     return tf.tile([0], [self._batch_size])  # Return all 0; we ignore them
 
-  def next_inputs(self, time, outputs, state, sample_ids, name=None):
+  def next_inputs(self, time, outputs, state, sample_ids, stop_token_preds, name=None):
     with tf.name_scope(name or 'TacoTrainingHelper'):
       finished = (time + 1 >= self._lengths)
-      next_inputs = self._targets[:, time, :]
+      next_inputs = self._targets[:, time, :] # Teacher forcing: feed the true frame
       return (finished, next_inputs, state)
 
 
