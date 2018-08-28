@@ -122,7 +122,11 @@ class Tacotron():
       n_priority_freq = int(3000 / (hp.sample_rate * 0.5) * hp.num_freq)
       self.linear_loss = 0.5 * tf.reduce_mean(l1) + 0.5 * tf.reduce_mean(l1[:,:,0:n_priority_freq])
 
-      self.loss = self.mel_loss + self.linear_loss + self.stop_token_loss
+      # Compute the regularization weights
+      all_vars = tf.trainable_variables()
+      self.regularization_loss = tf.add_n([tf.nn.l2_loss(v) for v in all_vars]) * hp.reg_weight
+
+      self.loss = self.mel_loss + self.linear_loss + self.stop_token_loss + self.regularization_loss
 
 
   def add_optimizer(self, global_step):
