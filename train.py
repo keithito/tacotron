@@ -1,6 +1,7 @@
 import argparse
 from datetime import datetime
 import math
+import numpy as np
 import os
 import subprocess
 import time
@@ -30,6 +31,8 @@ def add_stats(model):
     tf.summary.histogram('mel_targets', model.mel_targets)
     tf.summary.scalar('loss_mel', model.mel_loss)
     tf.summary.scalar('loss_linear', model.linear_loss)
+    tf.summary.scalar('regularization_loss', model.regularization_loss)
+    tf.summary.scalar('stop_token_loss', model.stop_token_loss)
     tf.summary.scalar('learning_rate', model.learning_rate)
     tf.summary.scalar('loss', model.loss)
     gradient_norms = [tf.norm(grad) for grad in model.gradients]
@@ -60,7 +63,7 @@ def train(log_dir, args):
   global_step = tf.Variable(0, name='global_step', trainable=False)
   with tf.variable_scope('model') as scope:
     model = create_model(args.model, hparams)
-    model.initialize(feeder.inputs, feeder.input_lengths, feeder.mel_targets, feeder.linear_targets)
+    model.initialize(feeder.inputs, feeder.input_lengths, feeder.mel_targets, feeder.linear_targets, feeder.stop_token_targets)
     model.add_loss()
     model.add_optimizer(global_step)
     stats = add_stats(model)
@@ -79,9 +82,11 @@ def train(log_dir, args):
 
       if args.restore_step:
         # Restore from a checkpoint if the user requested it.
+        checkpoint_state = tf.train.get_checkpoint_state(log_dir)
         restore_path = '%s-%d' % (checkpoint_path, args.restore_step)
-        saver.restore(sess, restore_path)
-        log('Resuming from checkpoint: %s at commit: %s' % (restore_path, commit), slack=True)
+        if checkpoint_state is not None:
+          saver.restore(sess, checkpoint_state.model_checkpoint_path)
+          log('Resuming from checkpoint: %s at commit: %s' % (checkpoint_state.model_checkpoint_path, commit), slack=True)
       else:
         log('Starting new training run at commit: %s' % commit, slack=True)
 
@@ -124,13 +129,13 @@ def train(log_dir, args):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--base_dir', default=os.path.expanduser('~/tacotron'))
+  parser.add_argument('--base_dir', default=os.path.expanduser('.'))
   parser.add_argument('--input', default='training/train.txt')
   parser.add_argument('--model', default='tacotron')
   parser.add_argument('--name', help='Name of the run. Used for logging. Defaults to model name.')
   parser.add_argument('--hparams', default='',
     help='Hyperparameter overrides as a comma-separated list of name=value pairs')
-  parser.add_argument('--restore_step', type=int, help='Global step to restore from checkpoint.')
+  parser.add_argument('--restore_step', type=bool, default=True, help='Global step to restore from checkpoint.')
   parser.add_argument('--summary_interval', type=int, default=100,
     help='Steps between running summary ops.')
   parser.add_argument('--checkpoint_interval', type=int, default=1000,
