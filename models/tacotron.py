@@ -49,10 +49,13 @@ class Tacotron():
 
       # Attention
       attention_cell = AttentionWrapper(
-        DecoderPrenetWrapper(GRUCell(hp.attention_depth), is_training, hp.prenet_depths),
+        GRUCell(hp.attention_depth),
         BahdanauAttention(hp.attention_depth, encoder_outputs),
         alignment_history=True,
         output_attention=False)                                                  # [N, T_in, attention_depth=256]
+      
+      # Apply prenet before concatenation in AttentionWrapper.
+      attention_cell = DecoderPrenetWrapper(attention_cell, is_training, hp.prenet_depths)
 
       # Concatenate attention context vector and RNN cell output into a 2*attention_depth=512D vector.
       concat_cell = ConcatOutputAndAttentionWrapper(attention_cell)              # [N, T_in, 2*attention_depth=512]
