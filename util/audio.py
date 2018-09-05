@@ -3,7 +3,7 @@ import librosa.filters
 import math
 import numpy as np
 import tensorflow as tf
-from scipy import signal
+import scipy
 from hparams import hparams
 
 
@@ -13,15 +13,15 @@ def load_wav(path):
 
 def save_wav(wav, path):
   wav *= 32767 / max(0.01, np.max(np.abs(wav)))
-  librosa.output.write_wav(path, wav.astype(np.int16), hparams.sample_rate)
+  scipy.io.wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
 
 
 def preemphasis(x):
-  return signal.lfilter([1, -hparams.preemphasis], [1], x)
+  return scipy.signal.lfilter([1, -hparams.preemphasis], [1], x)
 
 
 def inv_preemphasis(x):
-  return signal.lfilter([1], [1, -hparams.preemphasis], x)
+  return scipy.signal.lfilter([1], [1, -hparams.preemphasis], x)
 
 
 def spectrogram(y):
