@@ -44,12 +44,12 @@ Pull requests are welcome!
 
 1. **Download and unpack a model**:
    ```
-   curl http://data.keithito.com/data/speech/tacotron-20170720.tar.bz2 | tar xjC /tmp
+   curl http://data.keithito.com/data/speech/tacotron-20180905.tar.bz2 | tar xjC /tmp
    ```
 
 2. **Run the demo server**:
    ```
-   python3 demo_server.py --checkpoint /tmp/tacotron-20170720/model.ckpt
+   python3 demo_server.py --checkpoint /tmp/tacotron-20180905/model.ckpt
    ```
 
 3. **Point your browser at localhost:9000**
