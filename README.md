@@ -49,7 +49,7 @@ Pull requests are welcome!
 
 1. **Download and unpack a model**:
    ```
-   curl http://data.keithito.com/data/speech/tacotron-20180906.tar.bz2 | tar xjC /tmp
+   curl http://data.keithito.com/data/speech/tacotron-20180906.tar.gz | tar xzC /tmp
    ```
 
 2. **Run the demo server**:
