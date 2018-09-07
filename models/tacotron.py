@@ -50,7 +50,8 @@ class Tacotron():
       # Attention
       attention_cell = AttentionWrapper(
         GRUCell(hp.attention_depth),
-        BahdanauAttention(hp.attention_depth, encoder_outputs),
+        BahdanauAttention(hp.attention_depth, encoder_outputs,
+                          memory_sequence_length=input_lengths),
         alignment_history=True,
         output_attention=False)                                                  # [N, T_in, attention_depth=256]
       
