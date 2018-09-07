@@ -6,9 +6,8 @@ An implementation of Tacotron speech synthesis in TensorFlow.
 ### Audio Samples
 
   * **[Audio Samples](https://keithito.github.io/audio-samples/)** from models trained using this repo.
-    * The first set was trained for 877K steps on the [LJ Speech Dataset](https://keithito.com/LJ-Speech-Dataset/)
+    * The first set was trained for 441K steps on the [LJ Speech Dataset](https://keithito.com/LJ-Speech-Dataset/)
       * Speech started to become intelligble around 20K steps.
-      * Although loss continued to decrease, there wasn't much noticable improvement after ~250K steps.
     * The second set was trained by [@MXGray](https://github.com/MXGray) for 140K steps on the [Nancy Corpus](http://www.cstr.ed.ac.uk/projects/blizzard/2011/lessac_blizzard2011/).
 
 
@@ -50,12 +49,12 @@ Pull requests are welcome!
 
 1. **Download and unpack a model**:
    ```
-   curl http://data.keithito.com/data/speech/tacotron-20180905.tar.bz2 | tar xjC /tmp
+   curl http://data.keithito.com/data/speech/tacotron-20180906.tar.bz2 | tar xjC /tmp
    ```
 
 2. **Run the demo server**:
    ```
-   python3 demo_server.py --checkpoint /tmp/tacotron-20180905/model.ckpt
+   python3 demo_server.py --checkpoint /tmp/tacotron-20180906/model.ckpt
    ```
 
 3. **Point your browser at localhost:9000**
