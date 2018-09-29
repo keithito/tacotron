@@ -144,10 +144,10 @@ def _db_to_amp_tensorflow(x):
   return tf.pow(tf.ones(tf.shape(x)) * 10.0, x * 0.05)
 
 def _normalize(S):
-  return np.clip((S - hparams.min_level_db) / -hparams.min_level_db, 0, 1)
+  return 2.0 * (S - hparams.min_level_db) / -hparams.min_level_db - 1.0
 
 def _denormalize(S):
-  return (np.clip(S, 0, 1) * -hparams.min_level_db) + hparams.min_level_db
+  return ((S + 1.0) * -hparams.min_level_db / 2.0) + hparams.min_level_db
 
 def _denormalize_tensorflow(S):
-  return (tf.clip_by_value(S, 0, 1) * -hparams.min_level_db) + hparams.min_level_db
+  return ((S + 1.0) * -hparams.min_level_db / 2.0) + hparams.min_level_db
