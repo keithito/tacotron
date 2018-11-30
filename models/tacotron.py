@@ -15,7 +15,7 @@ class Tacotron():
     self._hparams = hparams
 
 
-  def initialize(self, inputs, input_lengths, mel_targets=None, linear_targets=None, stop_token_targets=None):
+  def initialize(self, inputs, input_lengths, mel_targets=None, linear_targets=None, stop_token_targets=None, global_step=None):
     '''Initializes the model for inference.
 
     Sets "mel_outputs", "linear_outputs", and "alignments" fields.
@@ -67,7 +67,7 @@ class Tacotron():
                                             frame_projection, stop_projection)
 
       if is_training:
-        helper = TacoTrainingHelper(inputs, mel_targets, hp.num_mels, hp.outputs_per_step)
+        helper = TacoTrainingHelper(inputs, mel_targets, hp.num_mels, hp.outputs_per_step, global_step)
       else:
         helper = TacoTestHelper(batch_size, hp.num_mels, hp.outputs_per_step)
 
