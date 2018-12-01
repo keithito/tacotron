@@ -8,7 +8,7 @@ hparams = tf.contrib.training.HParams(
   cleaners='basic_cleaners',
 
   # Audio:
-  num_mels=80,
+  num_mels=160,
   num_freq=1025,
   sample_rate=16000,
   frame_length_ms=50,
@@ -17,6 +17,7 @@ hparams = tf.contrib.training.HParams(
   min_level_db=-100,
   ref_level_db=20,
   max_frame_num=1000,
+  max_abs_value = 4,
 
   # Model:
   outputs_per_step=5,
@@ -38,7 +39,7 @@ hparams = tf.contrib.training.HParams(
   # Eval:
   max_iters=300,
   griffin_lim_iters=60,
-  power=1.5,              # Power to raise magnitudes to prior to Griffin-Lim
+  power=1.2,              # Power to raise magnitudes to prior to Griffin-Lim
 )
 
 
