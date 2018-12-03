@@ -21,12 +21,12 @@ hparams = tf.contrib.training.HParams(
 
   # Model:
   outputs_per_step=5,
-  embed_depth=256,
-  prenet_depths=[256, 128],
+  embed_depth=512,
+  prenet_depths=[256, 256],
   encoder_depth=256,
-  postnet_depth=256,
-  attention_depth=256,
-  decoder_depth=256,
+  postnet_depth=512,
+  attention_depth=128,
+  decoder_depth=1024,
 
   # Training:
   batch_size=32,
