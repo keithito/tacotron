@@ -18,6 +18,10 @@ def save_wav(wav, path):
   wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
 
 
+def trim_silence(wav):
+  return librosa.effects.trim(wav, top_db= 60, frame_length=512, hop_length=128)[0]
+
+
 def preemphasis(x):
   return signal.lfilter([1, -hparams.preemphasis], [1], x)
 
