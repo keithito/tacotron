@@ -13,8 +13,13 @@ def load_wav(path):
 
 
 def save_wav(wav, path):
-  wav *= 32767 / max(0.01, np.max(np.abs(wav)))
-  # librosa.output.write_wav(path, wav.astype(np.int16), hparams.sample_rate)
+  # rescaling for unified measure for all clips
+  wav = wav / np.abs(wav).max() * 0.999
+  # factor 0.5 in case of overflow for int16
+  f1 = 0.5 * 32767 / max(0.01, np.max(np.abs(wav)))
+  # sublinear scaling as Y ~ X ^ k (k < 1)
+  f2 = np.sign(wav) * np.power(np.abs(wav), 0.667)
+  wav = f1 * f2
   wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
 
 
