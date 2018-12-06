@@ -20,6 +20,10 @@ def save_wav(wav, path):
   # sublinear scaling as Y ~ X ^ k (k < 1)
   f2 = np.sign(wav) * np.power(np.abs(wav), 0.667)
   wav = f1 * f2
+  # bandpass for less noises
+  firwin = signal.firwin(hparams.num_freq, [75, 7600], pass_zero=False, fs=hparams.sample_rate)
+  wav = wav.convolve(wav, firwin)
+
   wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
 
 
