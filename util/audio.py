@@ -22,7 +22,7 @@ def save_wav(wav, path):
   wav = f1 * f2
   # bandpass for less noises
   firwin = signal.firwin(hparams.num_freq, [75, 7600], pass_zero=False, fs=hparams.sample_rate)
-  wav = wav.convolve(wav, firwin)
+  wav = signal.convolve(wav, firwin)
 
   wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
 
