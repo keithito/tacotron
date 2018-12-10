@@ -13,8 +13,22 @@ def load_wav(path):
 
 
 def save_wav(wav, path):
-  wav *= 32767 / max(0.01, np.max(np.abs(wav)))
+  # rescaling for unified measure for all clips
+  wav = wav / np.abs(wav).max() * 0.999
+  # factor 0.5 in case of overflow for int16
+  f1 = 0.5 * 32767 / max(0.01, np.max(np.abs(wav)))
+  # sublinear scaling as Y ~ X ^ k (k < 1)
+  f2 = np.sign(wav) * np.power(np.abs(wav), 0.667)
+  wav = f1 * f2
+  # bandpass for less noises
+  firwin = signal.firwin(hparams.num_freq, [75, 7600], pass_zero=False, fs=hparams.sample_rate)
+  wav = signal.convolve(wav, firwin)
+
   wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
+
+
+def trim_silence(wav):
+  return librosa.effects.trim(wav, top_db= 60, frame_length=512, hop_length=128)[0]
 
 
 def preemphasis(x):
@@ -143,10 +157,13 @@ def _db_to_amp_tensorflow(x):
   return tf.pow(tf.ones(tf.shape(x)) * 10.0, x * 0.05)
 
 def _normalize(S):
-  return np.clip((S - hparams.min_level_db) / -hparams.min_level_db, 0, 1)
+  # symmetric mels
+  return 2 * hparams.max_abs_value * ((S - hparams.min_level_db) / -hparams.min_level_db) - hparams.max_abs_value
 
 def _denormalize(S):
-  return (np.clip(S, 0, 1) * -hparams.min_level_db) + hparams.min_level_db
+  # symmetric mels
+  return ((S + hparams.max_abs_value) * -hparams.min_level_db) / (2 * hparams.max_abs_value) + hparams.min_level_db
 
 def _denormalize_tensorflow(S):
-  return (tf.clip_by_value(S, 0, 1) * -hparams.min_level_db) + hparams.min_level_db
+  # symmetric mels
+  return ((S + hparams.max_abs_value) * -hparams.min_level_db) / (2 * hparams.max_abs_value) + hparams.min_level_db

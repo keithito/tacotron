@@ -34,7 +34,6 @@ class Synthesizer:
     }
     wav = self.session.run(self.wav_output, feed_dict=feed_dict)
     wav = audio.inv_preemphasis(wav)
-    wav = wav[:audio.find_endpoint(wav)]
     out = io.BytesIO()
     audio.save_wav(wav, out)
     return out.getvalue()

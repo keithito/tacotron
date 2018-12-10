@@ -8,7 +8,7 @@ hparams = tf.contrib.training.HParams(
   cleaners='english_cleaners',
 
   # Audio:
-  num_mels=80,
+  num_mels=160,
   num_freq=1025,
   sample_rate=24000,
   frame_length_ms=50,
@@ -16,15 +16,17 @@ hparams = tf.contrib.training.HParams(
   preemphasis=0.97,
   min_level_db=-100,
   ref_level_db=20,
+  max_frame_num=1000,
+  max_abs_value = 4,
 
   # Model:
   outputs_per_step=5,
-  embed_depth=256,
-  prenet_depths=[256, 128],
+  embed_depth=512,
+  prenet_depths=[256, 256],
   encoder_depth=256,
-  postnet_depth=256,
-  attention_depth=256,
-  decoder_depth=256,
+  postnet_depth=512,
+  attention_depth=128,
+  decoder_depth=1024,
 
   # Training:
   batch_size=32,
@@ -38,7 +40,7 @@ hparams = tf.contrib.training.HParams(
   # Eval:
   max_iters=300,
   griffin_lim_iters=60,
-  power=1.5,              # Power to raise magnitudes to prior to Griffin-Lim
+  power=1.2,              # Power to raise magnitudes to prior to Griffin-Lim
 )
 
 
