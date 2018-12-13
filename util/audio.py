@@ -21,7 +21,7 @@ def save_wav(wav, path):
   f2 = np.sign(wav) * np.power(np.abs(wav), 0.667)
   wav = f1 * f2
   # bandpass for less noises
-  firwin = signal.firwin(hparams.num_freq, [75, 7600], pass_zero=False, fs=hparams.sample_rate)
+  firwin = signal.firwin(hparams.num_freq, [hparams.fmin, hparams.fmax], pass_zero=False, fs=hparams.sample_rate)
   wav = signal.convolve(wav, firwin)
 
   wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
@@ -145,7 +145,8 @@ def _linear_to_mel(spectrogram):
 
 def _build_mel_basis():
   n_fft = (hparams.num_freq - 1) * 2
-  return librosa.filters.mel(hparams.sample_rate, n_fft, n_mels=hparams.num_mels)
+  assert hparams.fmax < hparams.sample_rate // 2
+  return librosa.filters.mel(hparams.sample_rate, n_fft, n_mels=hparams.num_mels, fmin=hparams.fmin, fmax=hparams.fmax)
 
 def _amp_to_db(x):
   return 20 * np.log10(np.maximum(1e-5, x))

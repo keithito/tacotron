@@ -18,6 +18,8 @@ hparams = tf.contrib.training.HParams(
   ref_level_db=20,
   max_frame_num=1000,
   max_abs_value = 4,
+  fmin = 125, # for male, set 55
+  fmax = 7600, # for male, set 3600
 
   # Model:
   outputs_per_step=5,
