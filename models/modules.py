@@ -40,7 +40,7 @@ def cbhg(inputs, input_lengths, is_training, scope, K, projections, depth):
     with tf.variable_scope('conv_bank'):
       # Convolution bank: concatenate on the last axis to stack channels from all convolutions
       conv_outputs = tf.concat(
-        [conv1d(inputs, k, 128, tf.nn.relu, is_training, 0.5, 'conv1d_%d' % k) for k in range(1, K+1)],
+        [conv1d(inputs, k, 128, tf.nn.relu, is_training, 'conv1d_%d' % k) for k in range(1, K+1)],
         axis=-1
       )
 
@@ -52,8 +52,8 @@ def cbhg(inputs, input_lengths, is_training, scope, K, projections, depth):
       padding='same')
 
     # Two projection layers:
-    proj1_output = conv1d(maxpool_output, 3, projections[0], tf.nn.relu, is_training, 0.5, 'proj_1')
-    proj2_output = conv1d(proj1_output, 3, projections[1], lambda _:_, is_training, 0.5, 'proj_2')
+    proj1_output = conv1d(maxpool_output, 3, projections[0], tf.nn.relu, is_training, 'proj_1')
+    proj2_output = conv1d(proj1_output, 3, projections[1], lambda _:_, is_training, 'proj_2')
 
     # Residual connection:
     highway_input = proj2_output + inputs
@@ -96,8 +96,7 @@ def highwaynet(inputs, scope, depth):
     return H * T + inputs * (1.0 - T)
 
 
-def conv1d(inputs, kernel_size, channels, activation, is_training, drop_rate, scope):
-  if not is_training: drop_rate = 0.0
+def conv1d(inputs, kernel_size, channels, activation, is_training, scope):
   with tf.variable_scope(scope):
     conv1d_output = tf.layers.conv1d(
       inputs,
@@ -106,5 +105,4 @@ def conv1d(inputs, kernel_size, channels, activation, is_training, drop_rate, sc
       activation=None,
       padding='same')
     batched = tf.layers.batch_normalization(conv1d_output, training=is_training)
-    activated = activation(batched)
-    return tf.layers.dropout(activated, rate=drop_rate, training=is_training, name='dropout_{}'.format(scope))
+    return activation(batched)
