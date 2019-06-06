@@ -122,7 +122,7 @@ Pull requests are welcome!
    tensorboard --logdir ~/tacotron/logs-tacotron
    ```
 
-   The trainer dumps audio and alignments every 1000 steps. You can find these in
+   The trainer dumps audio and alignments every 100 steps. You can find these in
    `~/tacotron/logs-tacotron`.
 
 6. **Synthesize from a checkpoint**
