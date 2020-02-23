@@ -84,12 +84,15 @@ def _griffin_lim_tensorflow(S):
     S = tf.expand_dims(S, 0)
     S_complex = tf.identity(tf.cast(S, dtype=tf.complex64))
     y = _istft_tensorflow(S_complex)
+    alpha=S_complex ##declared new variable alpha of size 's' for new algorithm fast-griffinlim
+    alpha_n=0.2 ##another variable for coefficient for new algorithm fast-griffinlim
     for i in range(hparams.griffin_lim_iters):
-      est = _stft_tensorflow(y)
-      angles = est / tf.cast(tf.maximum(1e-8, tf.abs(est)), tf.complex64)
-      y = _istft_tensorflow(S_complex * angles)
-    return tf.squeeze(y, 0)
 
+      #edited code for fast griffin lim
+      angles = alpha / tf.cast(tf.maximum(1e-8, tf.abs(alpha)), tf.complex64)
+      y = _istft_tensorflow(S_complex * angles)
+      alpha=alpha_n*(_stft_tensorflow(y)-alpha)  
+    return tf.squeeze(y, 0)
 
 def _stft(y):
   n_fft, hop_length, win_length = _stft_parameters()
