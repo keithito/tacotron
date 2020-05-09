@@ -5,7 +5,7 @@ from hparams import hparams, hparams_debug_string
 from synthesizer import Synthesizer
 
 
-sentences = [
+sentences1 = [
   # From July 8, 2017 New York Times:
   'Scientists at the CERN laboratory say they have discovered a new particle.',
   'There’s a way to measure the acute emotional intelligence that has never gone out of style.',
@@ -18,6 +18,7 @@ sentences = [
   'Talib Kweli confirmed to AllHipHop that he will be releasing an album in the next year.',
 ]
 
+sentences = []
 
 def get_output_base_path(checkpoint_path):
   base_dir = os.path.dirname(checkpoint_path)
@@ -38,14 +39,22 @@ def run_eval(args):
       f.write(synth.synthesize(text))
 
 
-def main():
+def load_sentences(filename):
+    if filename: 
+        with open(filename) as my_file:
+            for line in my_file:
+                sentences.append(line.strip('\n'))
+
+def main(): 
   parser = argparse.ArgumentParser()
   parser.add_argument('--checkpoint', required=True, help='Path to model checkpoint')
   parser.add_argument('--hparams', default='',
     help='Hyperparameter overrides as a comma-separated list of name=value pairs')
+  parser.add_argument('--filename', default=None, help='path to txt file containing speech inputs')
   args = parser.parse_args()
   os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
   hparams.parse(args.hparams)
+  load_sentences(args.filename)
   run_eval(args)
 
 
