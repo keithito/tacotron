@@ -3,6 +3,7 @@ import librosa.filters
 import math
 import numpy as np
 import tensorflow as tf
+from scipy.io import wavfile
 import scipy
 from hparams import hparams
 
@@ -13,7 +14,7 @@ def load_wav(path):
 
 def save_wav(wav, path):
   wav *= 32767 / max(0.01, np.max(np.abs(wav)))
-  scipy.io.wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
+  wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
 
 
 def preemphasis(x):
