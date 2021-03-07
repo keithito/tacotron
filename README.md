@@ -71,6 +71,7 @@ Pull requests are welcome!
    The following are supported out of the box:
     * [LJ Speech](https://keithito.com/LJ-Speech-Dataset/) (Public Domain)
     * [Blizzard 2012](http://www.cstr.ed.ac.uk/projects/blizzard/2012/phase_one) (Creative Commons Attribution Share-Alike)
+    * [RUSLAN](https://ruslan-corpus.github.io/) (Creative Commons Attribution Share-Alike)
 
    You can use other datasets if you convert them to the right format. See [TRAINING_DATA.md](TRAINING_DATA.md) for more info.
 
@@ -98,12 +99,20 @@ Pull requests are welcome!
              |- lab
              |- wav
    ```
+   or like this for RUSLAN corpus:
+   ```
+   tacotron
+      |-Ruslan
+         |-metadata_RUSLAN_22200.csv
+         |-wavs
+   ```
 
 3. **Preprocess the data**
    ```
-   python3 preprocess.py --dataset ljspeech
+   python3 preprocess.py --dataset ljspeech --base_dir ~/tacotron
    ```
      * Use `--dataset blizzard` for Blizzard data
+     * Or `--dataset ruslan` for Ruslan corpus
 
 4. **Train a model**
    ```
@@ -159,17 +168,17 @@ Pull requests are welcome!
     `--restore_step=150000` flag to train.py (replacing 150000 with a step number prior to the
     spike). **Update**: a recent [fix](https://github.com/keithito/tacotron/pull/7) to gradient
     clipping by @candlewill may have fixed this.
-    
+
   * During eval and training, audio length is limited to `max_iters * outputs_per_step * frame_shift_ms`
     milliseconds. With the defaults (max_iters=200, outputs_per_step=5, frame_shift_ms=12.5), this is
     12.5 seconds.
-    
+
     If your training examples are longer, you will see an error like this:
     `Incompatible shapes: [32,1340,80] vs. [32,1000,80]`
-    
+
     To fix this, you can set a larger value of `max_iters` by passing `--hparams="max_iters=300"` to
     train.py (replace "300" with a value based on how long your audio is and the formula above).
-    
+
   * Here is the expected loss curve when training on LJ Speech with the default hyperparameters:
     ![Loss curve](https://user-images.githubusercontent.com/1945356/36077599-c0513e4a-0f21-11e8-8525-07347847720c.png)
 
